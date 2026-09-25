@@ -1,0 +1,57 @@
+📦GessenApp
+ ┣ 📂backend
+ ┃ ┣ 📂src
+ ┃ ┃ ┣ 📂config
+ ┃ ┃ ┃ ┗ 📜database.js
+ ┃ ┃ ┣ 📂controllers
+ ┃ ┃ ┃ ┣ 📜departamentos.controller.js
+ ┃ ┃ ┃ ┣ 📜platillos.controller.js
+ ┃ ┃ ┃ ┗ 📜usuarios.controller.js
+ ┃ ┃ ┣ 📂routes
+ ┃ ┃ ┃ ┣ 📜departamentos.routes.js
+ ┃ ┃ ┃ ┣ 📜platillos.routes.js
+ ┃ ┃ ┃ ┗ 📜usuarios.routes.js
+ ┃ ┃ ┗ 📜app.js
+ ┣ 📂frontend
+ ┃ ┣ 📂src
+ ┃ ┃ ┣ 📂components
+ ┃ ┃ ┃ ┣ 📂figma
+ ┃ ┃ ┃ ┃ ┗ 📜ImageWithFallback.tsx
+ ┃ ┃ ┃ ┣ 📂ui
+ ┃ ┃ ┃ ┃ ┗ 📜utils.ts
+ ┃ ┃ ┃ ┣ 📜AboutMeModal.tsx
+ ┃ ┃ ┃ ┣ 📜ConsumptionRegisterModal.tsx
+ ┃ ┃ ┃ ┣ 📜ConsumptionTab.tsx
+ ┃ ┃ ┃ ┣ 📜DailyRecommendationsTab.tsx
+ ┃ ┃ ┃ ┣ 📜DiabetesInfoSection.tsx
+ ┃ ┃ ┃ ┣ 📜Footer.tsx
+ ┃ ┃ ┃ ┣ 📜ForgotPasswordModal.tsx
+ ┃ ┃ ┃ ┣ 📜Header.tsx
+ ┃ ┃ ┃ ┣ 📜HeroSection.tsx
+ ┃ ┃ ┃ ┣ 📜InventoryTab.tsx
+ ┃ ┃ ┃ ┣ 📜LoginModal.tsx
+ ┃ ┃ ┃ ┣ 📜MoreRecipesCard.tsx
+ ┃ ┃ ┃ ┣ 📜PlateAnalysisTab.tsx
+ ┃ ┃ ┃ ┣ 📜RecipeCard.tsx
+ ┃ ┃ ┃ ┣ 📜RecipeModal.tsx
+ ┃ ┃ ┃ ┣ 📜RecipesSection.tsx
+ ┃ ┃ ┃ ┣ 📜RegisterModal.tsx
+ ┃ ┃ ┃ ┣ 📜SettingsModal.tsx
+ ┃ ┃ ┃ ┣ 📜SmartSearchTab.tsx
+ ┃ ┃ ┃ ┗ 📜TipsSection.tsx
+ ┃ ┃ ┣ 📂guidelines
+ ┃ ┃ ┃ ┗ 📜Guidelines.md
+ ┃ ┃ ┣ 📂services
+ ┃ ┃ ┃ ┗ 📜api.js
+ ┃ ┃ ┣ 📂styles
+ ┃ ┃ ┃ ┗ 📜globals.css
+ ┃ ┃ ┣ 📜App.tsx
+ ┃ ┃ ┣ 📜Attributions.md
+ ┃ ┃ ┣ 📜index.css
+ ┃ ┃ ┗ 📜main.tsx
+ ┃ ┣ 📜index.html
+ ┃ ┣ 📜package-lock.json
+ ┃ ┣ 📜package.json
+ ┃ ┣ 📜README.md
+ ┃ ┗ 📜vite.config.ts
+ ┗ 📜query

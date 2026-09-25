@@ -1,0 +1,415 @@
+{
+  "fecha": "2026-09-25T19:22:07.841Z",
+  "aprobados": 51,
+  "total": 51,
+  "resultados": [
+    {
+      "id": "AUT-01",
+      "modulo": "Autenticación",
+      "descripcion": "Registro de un usuario con datos válidos",
+      "esperado": "HTTP 201",
+      "obtenido": "HTTP 201, contraseña en respuesta: no",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "AUT-02",
+      "modulo": "Autenticación",
+      "descripcion": "Registro con correo duplicado",
+      "esperado": "HTTP 409",
+      "obtenido": "HTTP 409",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "AUT-03",
+      "modulo": "Autenticación",
+      "descripcion": "Registro con datos inválidos (peso de -5 kg)",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400: El peso debe estar entre 20 y 300 kg",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "AUT-04",
+      "modulo": "Autenticación",
+      "descripcion": "La contraseña se almacena cifrada",
+      "esperado": "Formato scrypt",
+      "obtenido": "Cifrada",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "AUT-05",
+      "modulo": "Autenticación",
+      "descripcion": "Inicio de sesión correcto devuelve token e id del usuario",
+      "esperado": "HTTP 200 con user.id",
+      "obtenido": "HTTP 200, user.id = 22, región: Pacífica",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "AUT-06",
+      "modulo": "Autenticación",
+      "descripcion": "Inicio de sesión con contraseña incorrecta queda en los logs",
+      "esperado": "HTTP 401 y log LOGIN_FALLIDO",
+      "obtenido": "HTTP 401, logs LOGIN_FALLIDO: 8 → 9",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "AUT-07",
+      "modulo": "Seguridad",
+      "descripcion": "Lista de usuarios sin sesión",
+      "esperado": "HTTP 401",
+      "obtenido": "HTTP 401",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "AUT-08",
+      "modulo": "Seguridad",
+      "descripcion": "Paciente intenta entrar al panel de administración",
+      "esperado": "HTTP 403",
+      "obtenido": "HTTP 403",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PLA-01",
+      "modulo": "Catálogo",
+      "descripcion": "Consulta del catálogo de platillos",
+      "esperado": "HTTP 200 y 96 platillos",
+      "obtenido": "HTTP 200, 96 platillos",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PLA-02",
+      "modulo": "Catálogo",
+      "descripcion": "Los nutrientes no se duplican en platillos con varios sabores o preferencias",
+      "esperado": "Calorías iguales al cálculo directo en todos los platillos",
+      "obtenido": "96 de 96 coinciden (3 con varios sabores/preferencias)",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PLA-03",
+      "modulo": "Catálogo",
+      "descripcion": "Cada platillo tiene imagen asignada",
+      "esperado": "96 de 96 con imagen",
+      "obtenido": "96 de 96 con imagen",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "FAV-01",
+      "modulo": "Favoritos",
+      "descripcion": "Paciente agrega un favorito",
+      "esperado": "HTTP 200, isFavorite = true",
+      "obtenido": "HTTP 200, isFavorite = true",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "FAV-02",
+      "modulo": "Favoritos",
+      "descripcion": "Paciente consulta sus favoritos",
+      "esperado": "Lista con el platillo agregado",
+      "obtenido": "HTTP 200, [\"70\"]",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "FAV-03",
+      "modulo": "Favoritos",
+      "descripcion": "Consulta de favoritos sin sesión",
+      "esperado": "HTTP 401",
+      "obtenido": "HTTP 401",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-01",
+      "modulo": "Registro de consumos",
+      "descripcion": "Paciente registra un consumo",
+      "esperado": "HTTP 201 y log REGISTRAR_CONSUMO",
+      "obtenido": "HTTP 201, logs: 6 → 7",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-02",
+      "modulo": "Registro de consumos",
+      "descripcion": "Registro sin sesión",
+      "esperado": "HTTP 401",
+      "obtenido": "HTTP 401",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-03",
+      "modulo": "Registro de consumos",
+      "descripcion": "Registro con momento del día inválido",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-04",
+      "modulo": "Registro de consumos",
+      "descripcion": "Registro de un platillo inexistente",
+      "esperado": "HTTP 404",
+      "obtenido": "HTTP 404",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-05",
+      "modulo": "Registro de consumos",
+      "descripcion": "Paciente consulta sus consumos de hoy con su aporte nutricional",
+      "esperado": "El consumo registrado aparece con calorías y hora",
+      "obtenido": "HTTP 200, 1 registro(s): Arepa blanca con queso 393.2 kcal a las 14:22",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-06",
+      "modulo": "Registro de consumos",
+      "descripcion": "Paciente elimina su propio consumo",
+      "esperado": "HTTP 200 y ya no aparece",
+      "obtenido": "HTTP 200, quedan 0",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-07",
+      "modulo": "Seguridad",
+      "descripcion": "Un paciente intenta eliminar un consumo de otro usuario",
+      "esperado": "HTTP 403",
+      "obtenido": "HTTP 403",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PER-01",
+      "modulo": "Perfil",
+      "descripcion": "Paciente actualiza su peso y teléfono",
+      "esperado": "HTTP 200 y datos guardados",
+      "obtenido": "HTTP 200, peso 75.50, teléfono 3001234567",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PER-02",
+      "modulo": "Perfil",
+      "descripcion": "Actualizar el perfil con una estatura imposible",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400: La estatura debe estar entre 50 y 250 cm",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PER-03",
+      "modulo": "Perfil",
+      "descripcion": "Cambiar el correo a uno que ya usa otra cuenta",
+      "esperado": "HTTP 409",
+      "obtenido": "HTTP 409",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PER-04",
+      "modulo": "Perfil",
+      "descripcion": "Cambiar la contraseña con la contraseña actual incorrecta",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400: La contraseña actual no es correcta",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PER-05",
+      "modulo": "Perfil",
+      "descripcion": "Cambiar la contraseña correctamente y entrar con la nueva",
+      "esperado": "HTTP 200 y login con la nueva",
+      "obtenido": "cambio HTTP 200; contraseña anterior HTTP 401; nueva HTTP 200",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PER-06",
+      "modulo": "Perfil",
+      "descripcion": "Actualizar el perfil sin sesión",
+      "esperado": "HTTP 401",
+      "obtenido": "HTTP 401",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ADM-01",
+      "modulo": "Panel",
+      "descripcion": "Inicio de sesión del administrador",
+      "esperado": "HTTP 200 y rol 1",
+      "obtenido": "HTTP 200, rol 1",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ADM-02",
+      "modulo": "Panel",
+      "descripcion": "Dashboard con indicadores",
+      "esperado": "HTTP 200 con totales",
+      "obtenido": "platillos 96, consumos 32, usuarios 4",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ADM-03",
+      "modulo": "Panel",
+      "descripcion": "Lista de usuarios con número de registros",
+      "esperado": "El paciente aparece con 11 registros",
+      "obtenido": "HTTP 200, registros del paciente: 11",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REC-01",
+      "modulo": "Recetas",
+      "descripcion": "Crear un platillo desde el panel",
+      "esperado": "HTTP 201 y log CREAR_PLATILLO",
+      "obtenido": "HTTP 201, id 102",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REC-02",
+      "modulo": "Recetas",
+      "descripcion": "Crear platillo con nivel glucémico inválido",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400: El nivel glucémico debe ser Bajo, Medio o Alto",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REC-03",
+      "modulo": "Recetas",
+      "descripcion": "Subir una imagen de platillo",
+      "esperado": "HTTP 201 y archivo accesible",
+      "obtenido": "HTTP 201, archivo: HTTP 200",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REC-04",
+      "modulo": "Recetas",
+      "descripcion": "Editar el platillo con la imagen subida",
+      "esperado": "HTTP 200 y cambio guardado",
+      "obtenido": "HTTP 200, Platillo de prueba editado (Medio)",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REC-05",
+      "modulo": "Recetas",
+      "descripcion": "Eliminar un platillo que tiene consumos registrados",
+      "esperado": "HTTP 409 con mensaje",
+      "obtenido": "HTTP 409: No se puede eliminar: el platillo tiene 1 consumo(s) registrados en el historial de los pacientes",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REC-06",
+      "modulo": "Recetas",
+      "descripcion": "Eliminar un platillo sin consumos",
+      "esperado": "HTTP 200",
+      "obtenido": "HTTP 200",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REP-01",
+      "modulo": "Reporte PDF",
+      "descripcion": "Reporte nutricional del paciente",
+      "esperado": "4 días, 11 registros y observaciones",
+      "obtenido": "HTTP 200, 4 días, 11 registros, 7 observaciones",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REP-02",
+      "modulo": "Reporte PDF",
+      "descripcion": "Los totales del reporte coinciden con la suma de los registros",
+      "esperado": "Diferencia menor de 1 kcal",
+      "obtenido": "suma 12944.4 kcal; total 12944.4 kcal; promedio diario 3236.1 kcal",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REP-03",
+      "modulo": "Reporte PDF",
+      "descripcion": "El reporte detecta días sin desayuno y platillos de IG alto",
+      "esperado": "Observaciones presentes",
+      "obtenido": "sin desayuno: sí; IG alto: sí",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REP-04",
+      "modulo": "Reporte PDF",
+      "descripcion": "Filtro por rango de fechas",
+      "esperado": "Solo los días del rango",
+      "obtenido": "HTTP 200, 2 días en el rango",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REP-05",
+      "modulo": "Reporte PDF",
+      "descripcion": "La descarga del informe queda en los logs",
+      "esperado": "Log DESCARGAR_REPORTE_PDF",
+      "obtenido": "logs: 5 → 6",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REP-06",
+      "modulo": "Reporte PDF",
+      "descripcion": "Fecha con formato inválido",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ADM-04",
+      "modulo": "Administradores",
+      "descripcion": "Un administrador no puede quitarse su propio rol",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400: No puedes quitarte el rol de administrador a ti mismo",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ADM-05",
+      "modulo": "Administradores",
+      "descripcion": "Crear un administrador con contraseña cifrada",
+      "esperado": "HTTP 201",
+      "obtenido": "HTTP 201",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CFG-01",
+      "modulo": "Configuración",
+      "descripcion": "Guardar y leer la configuración",
+      "esperado": "El valor guardado se lee de vuelta",
+      "obtenido": "HTTP 200, app_name = GessenApp Pruebas, tamaño BD = 10062 kB",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CFG-02",
+      "modulo": "Configuración",
+      "descripcion": "Cambio de contraseña con confirmación distinta",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "LOG-01",
+      "modulo": "Logs",
+      "descripcion": "Consulta de los logs",
+      "esperado": "Incluye inicios de sesión y acciones del panel",
+      "obtenido": "HTTP 200, 110 eventos",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "LOG-02",
+      "modulo": "Logs",
+      "descripcion": "Filtro de logs por acción",
+      "esperado": "Solo eventos de la acción elegida",
+      "obtenido": "21 eventos LOGIN",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "LOG-03",
+      "modulo": "Logs",
+      "descripcion": "Paciente intenta consultar los logs",
+      "esperado": "HTTP 403",
+      "obtenido": "HTTP 403",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "USR-01",
+      "modulo": "Usuarios",
+      "descripcion": "Eliminar un usuario con historial (borrado en cascada)",
+      "esperado": "HTTP 200 y sin registros huérfanos",
+      "obtenido": "HTTP 200, registros restantes: 0",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "REN-01",
+      "modulo": "Desempeño",
+      "descripcion": "Tiempo de respuesta del catálogo (30 solicitudes)",
+      "esperado": "Percentil 95 menor de 1000 ms",
+      "obtenido": "media 15 ms; p95 18 ms",
+      "estado": "Aprobado"
+    }
+  ]
+}
