@@ -95,10 +95,11 @@ await caso("AUT-08", "Seguridad", "Paciente intenta entrar al panel de administr
 });
 
 // ---------- Catálogo ----------
-await caso("PLA-01", "Catálogo", "Consulta del catálogo de platillos", "HTTP 200 y 96 platillos", async () => {
+await caso("PLA-01", "Catálogo", "Consulta del catálogo de platillos (solo se publican las recetas con ingredientes)", "HTTP 200 y todas las recetas con ingredientes", async () => {
   const r = await api("GET", "/platillos");
   platillos = Array.isArray(r.data) ? r.data : [];
-  return [r.status === 200 && platillos.length === 96, `HTTP ${r.status}, ${platillos.length} platillos`];
+  const { rows } = await db.query("SELECT COUNT(*)::int AS n FROM platillos p WHERE EXISTS (SELECT 1 FROM platillos_ingredientes pi WHERE pi.id_platillo = p.id_platillo)");
+  return [r.status === 200 && platillos.length === rows[0].n && platillos.length >= 96, `HTTP ${r.status}, ${platillos.length} platillos publicados de ${rows[0].n} con ingredientes`];
 });
 await caso("PLA-02", "Catálogo", "Los nutrientes no se duplican en platillos con varios sabores o preferencias", "Calorías iguales al cálculo directo en todos los platillos", async () => {
   const { rows } = await db.query(`SELECT id_platillo, calorias FROM (${NUTRIENTES_PLATILLO_SQL}) t`);
@@ -107,9 +108,37 @@ await caso("PLA-02", "Catálogo", "Los nutrientes no se duplican en platillos co
   const multiples = platillos.filter((p) => (p.flavors?.length || 0) * (p.preferences?.length || 0) > 1).length;
   return [distintos.length === 0, `${platillos.length - distintos.length} de ${platillos.length} coinciden (${multiples} con varios sabores/preferencias)`];
 });
-await caso("PLA-03", "Catálogo", "Cada platillo tiene imagen asignada", "96 de 96 con imagen", async () => {
+await caso("PLA-03", "Catálogo", "Los 96 platillos del catálogo base tienen imagen asignada", "96 o más con imagen", async () => {
   const con = platillos.filter((p) => p.image).length;
-  return [con === platillos.length, `${con} de ${platillos.length} con imagen`];
+  return [con >= 96, `${con} de ${platillos.length} con imagen`];
+});
+
+await caso("PLA-04", "Catálogo", "Coherencia de las recetas: cada platillo publicado tiene ingredientes y ninguno lleva más de 20 g de aceite", "Todos los publicados coherentes", async () => {
+  const { rows } = await db.query(`
+    SELECT p.nombre_platillo,
+           COUNT(pi.id_ingrediente)::int AS n,
+           COALESCE(SUM(pi.cantidad) FILTER (WHERE i.nombre_ingrediente ILIKE 'aceite%'), 0)::float AS aceite
+    FROM platillos p
+    LEFT JOIN platillos_ingredientes pi ON pi.id_platillo = p.id_platillo
+    LEFT JOIN ingredientes i ON i.id_ingrediente = pi.id_ingrediente
+    GROUP BY p.nombre_platillo`);
+  const publicados = new Set(platillos.map((p) => p.title));
+  const malos = rows.filter((r) => publicados.has(r.nombre_platillo) && (r.n === 0 || r.aceite > 20));
+  rows.splice(0, rows.length, ...rows.filter((r) => publicados.has(r.nombre_platillo)));
+  const pan = platillos.find((p) => p.title === "Pan blanco con mermelada");
+  const panOk = pan?.ingredients?.some((i) => i.startsWith("Pan blanco")) && pan?.ingredients?.some((i) => i.startsWith("Mermelada"));
+  return [malos.length === 0 && panOk, `${rows.length - malos.length} de ${rows.length} coherentes; Pan blanco con mermelada: ${pan?.ingredients?.join(", ")}`];
+});
+
+await caso("PLA-05", "Catálogo", "Carga glucémica calculada con el índice glucémico y los carbohidratos de cada ingrediente", "Igual al cálculo directo (Pan blanco con mermelada)", async () => {
+  const pan = platillos.find((p) => p.title === "Pan blanco con mermelada");
+  const { rows } = await db.query(`
+    SELECT ROUND(SUM(v.cantidad_por_100g * pi.cantidad / 100.0 * COALESCE(v.indice_glucemico, 0) / 100.0))::int AS cg
+    FROM platillos_ingredientes pi
+    JOIN ingrediente_valores_nutricionales v ON v.id_ingrediente = pi.id_ingrediente
+    JOIN nutrientes n ON n.id_nutriente = v.id_nutriente AND n.nombre = 'Carbohidratos'
+    WHERE pi.id_platillo = $1`, [Number(pan.id)]);
+  return [Number(pan.glycemicLoad) === rows[0].cg && rows[0].cg > 0, `API: ${pan.glycemicLoad}; cálculo directo: ${rows[0].cg}`];
 });
 
 // ---------- Favoritos y consumo ----------
@@ -131,6 +160,16 @@ await caso("CON-01", "Registro de consumos", "Paciente registra un consumo", "HT
   const r = await api("POST", "/platillos/consumo", { token: tokenPaciente, body: { platilloId: idPlatillo, mealTime: "Almuerzo", portions: 1, rating: 5 } });
   const despues = await contarLogs("REGISTRAR_CONSUMO");
   return [r.status === 201 && despues === antes + 1, `HTTP ${r.status}, logs: ${antes} → ${despues}`];
+});
+await caso("CAL-01", "Catálogo", "La calificación registrada con el consumo aparece en el catálogo", "Promedio y total iguales a los de la base, con la calificación del paciente", async () => {
+  const r = await api("GET", "/platillos");
+  const p = (r.data || []).find((x) => x.id === idPlatillo);
+  const { rows: [bd] } = await db.query(
+    `SELECT ROUND(AVG(rating)::numeric, 1)::float AS promedio, COUNT(*)::int AS total,
+            COUNT(*) FILTER (WHERE id_usuario = $2 AND rating = 5)::int AS del_paciente
+     FROM platillo_calificaciones WHERE id_platillo = $1`, [idPlatillo, idPaciente]);
+  const ok = r.status === 200 && p?.rating === bd.promedio && p?.ratingCount === bd.total && bd.del_paciente === 1;
+  return [ok, `HTTP ${r.status}, catálogo: ${p?.rating} con ${p?.ratingCount}; base: ${bd.promedio} con ${bd.total}`];
 });
 await caso("CON-02", "Registro de consumos", "Registro sin sesión", "HTTP 401", async () => {
   const r = await api("POST", "/platillos/consumo", { body: { platilloId: idPlatillo, mealTime: "Cena" } });
@@ -155,6 +194,17 @@ await caso("CON-06", "Registro de consumos", "Paciente elimina su propio consumo
   const r = await api("DELETE", `/platillos/consumo/${lista[0].id_historial}`, { token: tokenPaciente });
   const despues = (await api("GET", "/platillos/consumos", { token: tokenPaciente })).data;
   return [r.status === 200 && despues.length === 0, `HTTP ${r.status}, quedan ${despues.length}`];
+});
+await caso("CON-08", "Registro de consumos", "Registro con la hora indicada por el paciente", "HTTP 201 y la hora guardada es 07:30", async () => {
+  const r = await api("POST", "/platillos/consumo", { token: tokenPaciente, body: { platilloId: idPlatillo, mealTime: "Desayuno", portions: 1, hora: "07:30" } });
+  const hoy = (await api("GET", "/platillos/consumos", { token: tokenPaciente })).data || [];
+  const reg = hoy.find((x) => x.id_historial === r.data?.id);
+  if (r.data?.id) await api("DELETE", `/platillos/consumo/${r.data.id}`, { token: tokenPaciente });
+  return [r.status === 201 && reg?.hora === "07:30", `HTTP ${r.status}, hora guardada: ${reg?.hora}`];
+});
+await caso("CON-09", "Registro de consumos", "Registro con una hora inválida", "HTTP 400", async () => {
+  const r = await api("POST", "/platillos/consumo", { token: tokenPaciente, body: { platilloId: idPlatillo, mealTime: "Cena", hora: "25:00" } });
+  return [r.status === 400, `HTTP ${r.status}: ${r.data?.error}`];
 });
 await caso("CON-07", "Seguridad", "Un paciente intenta eliminar un consumo de otro usuario", "HTTP 403", async () => {
   const otro = await db.query("SELECT id_historial FROM historial_consumo WHERE id_usuario <> $1 LIMIT 1", [idPaciente]);
@@ -190,6 +240,15 @@ await caso("PER-05", "Perfil", "Cambiar la contraseña correctamente y entrar co
   if (nuevo.data?.token) tokenPaciente = nuevo.data.token;
   return [r.status === 200 && viejo.status === 401 && nuevo.status === 200, `cambio HTTP ${r.status}; contraseña anterior HTTP ${viejo.status}; nueva HTTP ${nuevo.status}`];
 });
+await caso("PER-07", "Perfil", "Paciente de la costa de Nariño elige la región Pacífica y el inicio de sesión la devuelve", "Región Pacífica; al restablecer, Andina (región por defecto de Nariño)", async () => {
+  const { rows } = await db.query("SELECT id_region FROM regiones WHERE nombre_region = 'Pacífica'");
+  const r1 = await api("PUT", "/usuarios/me", { token: tokenPaciente, body: { id_region: rows[0].id_region } });
+  const l1 = await api("POST", "/login", { body: { email: paciente.email, password: "Nueva2026!" } });
+  const r2 = await api("PUT", "/usuarios/me", { token: tokenPaciente, body: { id_region: null } });
+  const l2 = await api("POST", "/login", { body: { email: paciente.email, password: "Nueva2026!" } });
+  const ok = r1.status === 200 && r2.status === 200 && l1.data?.user?.region === "Pacífica" && l2.data?.user?.region === "Andina";
+  return [ok, `elegida: ${l1.data?.user?.region}; por departamento: ${l2.data?.user?.region}`];
+});
 await caso("PER-06", "Perfil", "Actualizar el perfil sin sesión", "HTTP 401", async () => {
   const r = await api("PUT", "/usuarios/me", { body: { peso: 70 } });
   return [r.status === 401, `HTTP ${r.status}`];
@@ -224,7 +283,8 @@ await caso("ADM-01", "Panel", "Inicio de sesión del administrador", "HTTP 200 y
 });
 await caso("ADM-02", "Panel", "Dashboard con indicadores", "HTTP 200 con totales", async () => {
   const r = await api("GET", "/admin/dashboard", { token: tokenAdmin });
-  return [r.status === 200 && r.data.totalPlatillos === 96 && r.data.totalConsumos >= 11, `platillos ${r.data?.totalPlatillos}, consumos ${r.data?.totalConsumos}, usuarios ${r.data?.totalUsuarios}`];
+  const { rows } = await db.query("SELECT COUNT(*)::int AS n FROM platillos");
+  return [r.status === 200 && r.data.totalPlatillos === rows[0].n && r.data.totalConsumos >= 11, `platillos ${r.data?.totalPlatillos}, consumos ${r.data?.totalConsumos}, usuarios ${r.data?.totalUsuarios}`];
 });
 await caso("ADM-03", "Panel", "Lista de usuarios con número de registros", "El paciente aparece con 11 registros", async () => {
   const r = await api("GET", "/admin/usuarios", { token: tokenAdmin });
@@ -247,7 +307,7 @@ await caso("REC-03", "Recetas", "Subir una imagen de platillo", "HTTP 201 y arch
   const png = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==";
   const r = await api("POST", "/admin/imagenes", { token: tokenAdmin, body: { dataUrl: png } });
   urlImagen = r.data?.url;
-  const archivo = urlImagen ? await fetch(urlImagen) : null;
+  const archivo = urlImagen ? await fetch(new URL(urlImagen, BASE)) : null;
   return [r.status === 201 && archivo?.status === 200, `HTTP ${r.status}, archivo: HTTP ${archivo?.status}`];
 });
 await caso("REC-04", "Recetas", "Editar el platillo con la imagen subida", "HTTP 200 y cambio guardado", async () => {
@@ -255,8 +315,30 @@ await caso("REC-04", "Recetas", "Editar el platillo con la imagen subida", "HTTP
   const { rows } = await db.query("SELECT nombre_platillo, nivel_glucemico, imagen_url FROM platillos WHERE id_platillo = $1", [idNuevo]);
   return [r.status === 200 && rows[0].nivel_glucemico === "Medio" && rows[0].imagen_url === urlImagen, `HTTP ${r.status}, ${rows[0].nombre_platillo} (${rows[0].nivel_glucemico})`];
 });
+await caso("ING-01", "Recetas", "Lista de ingredientes disponibles en el panel", "HTTP 200 con 72 ingredientes", async () => {
+  const r = await api("GET", "/admin/ingredientes", { token: tokenAdmin });
+  return [r.status === 200 && r.data?.length === 72, `HTTP ${r.status}, ${r.data?.length} ingredientes`];
+});
+await caso("ING-02", "Recetas", "Asignar ingredientes a un platillo desde el panel recalcula su aporte", "100 g de pollo + 100 g de brócoli = 199 kcal", async () => {
+  const ing = (await api("GET", "/admin/ingredientes", { token: tokenAdmin })).data || [];
+  const id = (n) => ing.find((x) => x.nombre_ingrediente === n)?.id_ingrediente;
+  const antes = await contarLogs("EDITAR_INGREDIENTES_PLATILLO");
+  const r = await api("PUT", `/admin/platillos/${idNuevo}/ingredientes`, { token: tokenAdmin, body: { ingredientes: [{ id_ingrediente: id("Pollo"), cantidad: 100 }, { id_ingrediente: id("Brócoli"), cantidad: 100 }] } });
+  const despues = await contarLogs("EDITAR_INGREDIENTES_PLATILLO");
+  const kcal = Number(r.data?.nutrientes?.calorias);
+  return [r.status === 200 && kcal === 199 && despues === antes + 1, `HTTP ${r.status}, ${kcal} kcal, log: ${antes} → ${despues}`];
+});
+await caso("ING-03", "Recetas", "Asignar un ingrediente con cantidad inválida", "HTTP 400", async () => {
+  const r = await api("PUT", `/admin/platillos/${idNuevo}/ingredientes`, { token: tokenAdmin, body: { ingredientes: [{ id_ingrediente: 1, cantidad: 0 }] } });
+  return [r.status === 400, `HTTP ${r.status}: ${r.data?.error}`];
+});
+await caso("ING-04", "Seguridad", "Paciente intenta cambiar los ingredientes de un platillo", "HTTP 403", async () => {
+  const r = await api("PUT", `/admin/platillos/${idNuevo}/ingredientes`, { token: tokenPaciente, body: { ingredientes: [{ id_ingrediente: 1, cantidad: 100 }] } });
+  return [r.status === 403, `HTTP ${r.status}`];
+});
 await caso("REC-05", "Recetas", "Eliminar un platillo que tiene consumos registrados", "HTTP 409 con mensaje", async () => {
-  const r = await api("DELETE", `/admin/platillos/${idPlatillo}`, { token: tokenAdmin });
+  // "Avena con papaya" tiene un consumo en el historial de prueba sembrado arriba
+  const r = await api("DELETE", `/admin/platillos/${porNombre("Avena con papaya")}`, { token: tokenAdmin });
   return [r.status === 409, `HTTP ${r.status}: ${r.data?.error}`];
 });
 await caso("REC-06", "Recetas", "Eliminar un platillo sin consumos", "HTTP 200", async () => {
@@ -283,7 +365,8 @@ await caso("REP-03", "Reporte PDF", "El reporte detecta días sin desayuno y pla
 });
 await caso("REP-04", "Reporte PDF", "Filtro por rango de fechas", "Solo los días del rango", async () => {
   const hoy = new Date();
-  const f = (d) => new Date(hoy.getTime() + d * 86400000).toISOString().slice(0, 10);
+  // Fecha local (la misma que CURRENT_DATE de la base), no UTC
+  const f = (d) => new Date(hoy.getTime() + d * 86400000).toLocaleDateString("en-CA");
   const r = await api("GET", `/admin/reporte/${idPaciente}?desde=${f(-2)}&hasta=${f(-1)}`, { token: tokenAdmin });
   return [r.status === 200 && r.data.periodo.dias_con_registro === 2, `HTTP ${r.status}, ${r.data?.periodo?.dias_con_registro} días en el rango`];
 });
@@ -296,6 +379,51 @@ await caso("REP-05", "Reporte PDF", "La descarga del informe queda en los logs",
 await caso("REP-06", "Reporte PDF", "Fecha con formato inválido", "HTTP 400", async () => {
   const r = await api("GET", `/admin/reporte/${idPaciente}?desde=25-09-2026`, { token: tokenAdmin });
   return [r.status === 400, `HTTP ${r.status}`];
+});
+
+await caso("CON-10", "Registro de consumos", "Historial completo del paciente para «Mis consumos»", "11 registros, del más reciente al más antiguo, con fecha y hora", async () => {
+  const r = await api("GET", "/platillos/consumos?todos=1", { token: tokenPaciente });
+  const l = r.data || [];
+  const ordenado = l.every((x, i) => i === 0 || l[i - 1].fecha_consumo >= x.fecha_consumo);
+  const completos = l.every((x) => x.fecha_consumo && x.hora && x.meal_time && x.nombre_platillo);
+  return [r.status === 200 && l.length === 11 && ordenado && completos, `HTTP ${r.status}, ${l.length} registros, ordenados: ${ordenado ? "sí" : "no"}, con fecha, hora y momento: ${completos ? "sí" : "no"}`];
+});
+
+// ---------- Recomendador con aprendizaje automático ----------
+await caso("ML-01", "Aprendizaje automático", "Estado del modelo de recomendación en el panel", "Modelo entrenado con métricas de validación", async () => {
+  const r = await api("GET", "/admin/ml", { token: tokenAdmin });
+  const m = r.data?.metricas;
+  return [r.status === 200 && r.data?.entrenado === true && m?.modelo?.hitRate != null && m?.popularidad?.hitRate != null,
+    `HTTP ${r.status}, HitRate@10 modelo ${m?.modelo?.hitRate}, popularidad ${m?.popularidad?.hitRate}`];
+});
+await caso("ML-02", "Aprendizaje automático", "Reentrenar el modelo desde el panel", "HTTP 200 y log ENTRENAR_MODELO", async () => {
+  const antes = await contarLogs("ENTRENAR_MODELO");
+  const r = await api("POST", "/admin/ml/entrenar", { token: tokenAdmin });
+  const despues = await contarLogs("ENTRENAR_MODELO");
+  return [r.status === 200 && r.data?.interacciones > 0 && despues === antes + 1,
+    `HTTP ${r.status}, ${r.data?.interacciones} interacciones de ${r.data?.pacientes} pacientes, log: ${antes} → ${despues}`];
+});
+await caso("ML-03", "Aprendizaje automático", "Sugerencias personalizadas para un paciente con historial", "Modo ml, 6 sugerencias y ninguna de índice glucémico alto", async () => {
+  const r = await api("GET", "/platillos/recomendaciones-ml?limite=6", { token: tokenPaciente });
+  const ids = (r.data?.recomendaciones || []).map((x) => Number(x.id));
+  const { rows } = ids.length ? await db.query("SELECT COUNT(*)::int AS n FROM platillos WHERE id_platillo = ANY($1) AND LOWER(nivel_glucemico) = 'alto'", [ids]) : { rows: [{ n: 0 }] };
+  return [r.status === 200 && r.data?.modo === "ml" && ids.length === 6 && rows[0].n === 0,
+    `HTTP ${r.status}, modo ${r.data?.modo}, ${ids.length} sugerencias, de IG alto: ${rows[0].n}`];
+});
+await caso("ML-04", "Aprendizaje automático", "Usuario sin historial recibe sugerencias de inicio en frío", "Modo inicio_en_frio", async () => {
+  const r = await api("GET", "/platillos/recomendaciones-ml", { token: tokenAdmin });
+  return [r.status === 200 && r.data?.modo === "inicio_en_frio" && r.data?.recomendaciones?.length > 0, `HTTP ${r.status}, modo ${r.data?.modo}`];
+});
+await caso("ML-06", "Aprendizaje automático", "La vista del detalle de un platillo queda como interacción para el modelo", "HTTP 201 y evento view en user_interactions", async () => {
+  const antes = (await db.query("SELECT COUNT(*)::int AS n FROM user_interactions WHERE id_usuario = $1 AND event_type = 'view'", [idPaciente])).rows[0].n;
+  const r = await api("POST", "/platillos/interaccion", { token: tokenPaciente, body: { platilloId: idPlatillo } });
+  const despues = (await db.query("SELECT COUNT(*)::int AS n FROM user_interactions WHERE id_usuario = $1 AND event_type = 'view'", [idPaciente])).rows[0].n;
+  const invalido = await api("POST", "/platillos/interaccion", { token: tokenPaciente, body: { platilloId: "x" } });
+  return [r.status === 201 && despues === antes + 1 && invalido.status === 400, `HTTP ${r.status}, vistas: ${antes} → ${despues}; id inválido: HTTP ${invalido.status}`];
+});
+await caso("ML-05", "Seguridad", "Paciente intenta reentrenar el modelo", "HTTP 403", async () => {
+  const r = await api("POST", "/admin/ml/entrenar", { token: tokenPaciente });
+  return [r.status === 403, `HTTP ${r.status}`];
 });
 
 // ---------- Administradores, configuración y logs ----------
@@ -347,6 +475,14 @@ await caso("REN-01", "Desempeño", "Tiempo de respuesta del catálogo (30 solici
   const media = t.reduce((a, b) => a + b, 0) / t.length;
   return [t[28] < 1000, `media ${media.toFixed(0)} ms; p95 ${t[28].toFixed(0)} ms`];
 });
+
+// Limpieza: se eliminan los administradores temporales creados por esta ejecución (el paciente y
+// el platillo de prueba ya se eliminaron en USR-01 y REC-06)
+try {
+  await db.query("DELETE FROM usuarios WHERE email = ANY($1)", [[admin.email, `admin2.${sufijo}@gessenapp.salud.co`]]);
+} catch (e) {
+  console.warn("No se pudieron eliminar los administradores de prueba:", e.message);
+}
 
 await db.end();
 const aprobados = resultados.filter((r) => r.estado === "Aprobado").length;

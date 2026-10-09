@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Activity, Calendar, Clock, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, Info, Utensils, Coffee, Sun, Moon, Apple, PieChart, Plus, Search, Camera, X } from 'lucide-react';
+import { Activity, Calendar, Clock, TrendingUp, TrendingDown, Minus, CheckCircle2, AlertTriangle, Info, Utensils, Coffee, Sun, Moon, Apple, PieChart, Plus, Search, Camera, X, ChevronDown } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Button } from './ui/button';
 import { Input } from './ui/input';
@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Label } from './ui/label';
 import { toast } from "sonner";
 import { Recipe } from './RecipeCard';
+import { REFERENCIAS, calcularAlertas } from '../utils/referencias';
 
 // Tipos para consumos
 export interface Consumption {
@@ -15,6 +16,7 @@ export interface Consumption {
   recipeId?: string;
   recipeName: string;
   mealTime: string;
+  date?: string;
   time: string;
   portions?: number;
   rating?: number;
@@ -23,20 +25,25 @@ export interface Consumption {
   carbs: number;
   protein: number;
   fiber: number;
+  fat?: number;
   calories: number;
+  sugar?: number;
+  sodium?: number;
 }
 
 interface ConsumptionTabProps {
   user: any;
   recipes: Recipe[];
   externalConsumptions?: Consumption[];
+  // Historial completo (todas las fechas); alimenta la lista "Mis consumos"
+  historial?: Consumption[];
   onConsumptionsChange?: (consumptions: Consumption[]) => void;
   // Guardan y eliminan en la base de datos; si no se pasan, los cambios quedan solo en pantalla
   onAddConsumption?: (consumption: any) => Promise<boolean>;
   onRemoveConsumption?: (id: string) => Promise<void>;
 }
 
-export function ConsumptionTab({ user, recipes, externalConsumptions = [], onConsumptionsChange, onAddConsumption, onRemoveConsumption }: ConsumptionTabProps) {
+export function ConsumptionTab({ user, recipes, externalConsumptions = [], historial, onConsumptionsChange, onAddConsumption, onRemoveConsumption }: ConsumptionTabProps) {
   // Estados para consumos y modales
   const [consumptions, setConsumptions] = useState<Consumption[]>(externalConsumptions);
   const [addConsumptionModalOpen, setAddConsumptionModalOpen] = useState(false);
@@ -44,6 +51,8 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
   const [searchRecipe, setSearchRecipe] = useState('');
   const [selectedRecipe, setSelectedRecipe] = useState<Recipe | null>(null);
   const [selectedTime, setSelectedTime] = useState('');
+  const [expandido, setExpandido] = useState<string | null>(null);
+  const [visibles, setVisibles] = useState(15);
 
   // Sincronizar con consumos externos
   useEffect(() => {
@@ -64,11 +73,22 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
       carbs: acc.carbs + c.carbs,
       protein: acc.protein + c.protein,
       fiber: acc.fiber + c.fiber,
-      calories: acc.calories + c.calories
-    }), { carbs: 0, protein: 0, fiber: 0, calories: 0 });
+      fat: acc.fat + (c.fat || 0),
+      calories: acc.calories + c.calories,
+      sugar: acc.sugar + (c.sugar || 0),
+      sodium: acc.sodium + (c.sodium || 0)
+    }), { carbs: 0, protein: 0, fiber: 0, fat: 0, calories: 0, sugar: 0, sodium: 0 });
 
-    return totals;
+    // Se redondea a un decimal para evitar valores como 26.599999999999998
+    const r1 = (v: number) => Math.round(v * 10) / 10;
+    return {
+      carbs: r1(totals.carbs), protein: r1(totals.protein), fiber: r1(totals.fiber), fat: r1(totals.fat),
+      calories: r1(totals.calories), sugar: r1(totals.sugar), sodium: r1(totals.sodium),
+    };
   }, [consumptions]);
+
+  // Alertas del día por sodio y azúcares (mismos umbrales que el informe del profesional)
+  const alertasDelDia = useMemo(() => calcularAlertas(consumptions), [consumptions]);
 
   // Calcular impacto glucémico estimado del día
   const glycemicImpact = useMemo(() => {
@@ -82,68 +102,69 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
       description: 'Registra tu primera comida'
     };
 
-    const lowCount = consumptions.filter(c => c.glycemicIndex === 'bajo').length;
-    const mediumCount = consumptions.filter(c => c.glycemicIndex === 'medio').length;
-    const highCount = consumptions.filter(c => c.glycemicIndex === 'alto').length;
+    // Carga glucémica acumulada del día: suma la de cada platillo (índice glucémico y carbohidratos
+    // de sus ingredientes) por la porción consumida. A diferencia del porcentaje de carbohidratos,
+    // distingue un platillo de índice glucémico bajo, como la avena, de uno de índice alto.
+    const carga = Math.round(consumptions.reduce((s, c) => {
+      const receta = recipes.find(r => r.id === c.recipeId);
+      return s + (Number(receta?.glycemicLoad) || 0) * (c.portions || 1);
+    }, 0));
+    const detalle = `Carga glucémica acumulada: ${carga} (baja hasta ${REFERENCIAS.carga_dia_baja}, alta desde ${REFERENCIAS.carga_dia_alta})`;
 
-    // Cálculo del porcentaje de carbohidratos del total de calorías
-    const carbsCalories = dailyTotals.carbs * 4; // 1g carbs = 4 kcal
-    const totalCalories = dailyTotals.calories || 1;
-    const carbsPercentage = (carbsCalories / totalCalories) * 100;
-
-    // Lógica de reglas condicionales para determinar impacto
-    if (highCount > 0 || carbsPercentage > 60) {
-      return { 
-        level: 'Alto', 
-        color: 'red', 
+    if (carga >= REFERENCIAS.carga_dia_alta) {
+      return {
+        level: 'Alto',
+        color: 'red',
         bgColor: 'bg-red-50',
         borderColor: 'border-red-200',
         textColor: 'text-red-700',
         icon: TrendingUp,
-        description: 'Impacto glucémico elevado detectado'
+        description: detalle
       };
-    } else if (mediumCount >= 2 || carbsPercentage > 45) {
-      return { 
-        level: 'Moderado', 
-        color: 'yellow', 
+    } else if (carga > REFERENCIAS.carga_dia_baja) {
+      return {
+        level: 'Moderado',
+        color: 'yellow',
         bgColor: 'bg-yellow-50',
         borderColor: 'border-yellow-200',
         textColor: 'text-yellow-700',
         icon: Minus,
-        description: 'Impacto glucémico moderado'
+        description: detalle
       };
     } else {
-      return { 
-        level: 'Bajo', 
-        color: 'green', 
+      return {
+        level: 'Bajo',
+        color: 'green',
         bgColor: 'bg-green-50',
         borderColor: 'border-green-200',
         textColor: 'text-green-700',
         icon: TrendingDown,
-        description: 'Excelente control glucémico'
+        description: detalle
       };
     }
-  }, [consumptions, dailyTotals]);
+  }, [consumptions, recipes]);
 
-  // Distribución de macronutrientes
+  // Distribución de la energía entre macronutrientes: 4 kcal/g de carbohidratos y proteínas, 9 kcal/g de grasas.
+  // La fibra no se incluye: forma parte de los carbohidratos y se muestra aparte.
   const macrosDistribution = useMemo(() => {
-    const totalGrams = dailyTotals.carbs + dailyTotals.protein + dailyTotals.fiber;
-    if (totalGrams === 0) return { carbs: 0, protein: 0, fiber: 0 };
+    const kc = dailyTotals.carbs * 4, kp = dailyTotals.protein * 4, kg = dailyTotals.fat * 9;
+    const total = kc + kp + kg;
+    if (total === 0) return { carbs: 0, protein: 0, fat: 0 };
 
     return {
-      carbs: Math.round((dailyTotals.carbs / totalGrams) * 100),
-      protein: Math.round((dailyTotals.protein / totalGrams) * 100),
-      fiber: Math.round((dailyTotals.fiber / totalGrams) * 100)
+      carbs: Math.round((kc / total) * 100),
+      protein: Math.round((kp / total) * 100),
+      fat: Math.round((kg / total) * 100)
     };
   }, [dailyTotals]);
 
   // Generar consejo automático basado en reglas condicionales
   const automaticAdvice = useMemo(() => {
     // Regla 1: Bajo consumo de fibra
-    if (dailyTotals.fiber < 20) {
+    if (dailyTotals.fiber < REFERENCIAS.fibra_min_g) {
       return {
         title: 'Aumenta tu consumo de fibra',
-        message: 'Tu ingesta de fibra está por debajo de lo recomendado (25-30g diarios). Incluye más vegetales, legumbres y granos integrales en tus próximas comidas.',
+        message: `Tu ingesta de fibra está por debajo de lo recomendado (${REFERENCIAS.fibra_min_g}-30 g diarios). Incluye más vegetales, legumbres y granos integrales en tus próximas comidas.`,
         icon: AlertTriangle,
         color: 'amber'
       };
@@ -211,6 +232,40 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
     }
   };
 
+
+  // Lista "Mis consumos": historial completo (o los de hoy si no se recibe), del más reciente al más antiguo
+  const listaConsumos = useMemo(() => {
+    const base = historial ?? consumptions;
+    return [...base].sort((a, b) => `${b.date || ''} ${b.time}`.localeCompare(`${a.date || ''} ${a.time}`));
+  }, [historial, consumptions]);
+
+  const gruposPorFecha = useMemo(() => {
+    const grupos = new Map<string, Consumption[]>();
+    for (const c of listaConsumos.slice(0, visibles)) {
+      const f = c.date || new Date().toLocaleDateString('en-CA');
+      if (!grupos.has(f)) grupos.set(f, []);
+      grupos.get(f)!.push(c);
+    }
+    return [...grupos.entries()];
+  }, [listaConsumos, visibles]);
+
+  const etiquetaFecha = (f: string) => {
+    const hoy = new Date();
+    const ayer = new Date(hoy.getTime() - 86400000);
+    if (f === hoy.toLocaleDateString('en-CA')) return 'Hoy';
+    if (f === ayer.toLocaleDateString('en-CA')) return 'Ayer';
+    return new Date(f + 'T12:00:00').toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+  };
+
+  // Momento del día sugerido para un registro nuevo, según la hora actual
+  const momentoSegunHora = (): 'Desayuno' | 'Almuerzo' | 'Merienda' | 'Snack' | 'Cena' => {
+    const h = new Date().getHours();
+    if (h >= 5 && h < 11) return 'Desayuno';
+    if (h >= 11 && h < 16) return 'Almuerzo';
+    if (h >= 16 && h < 20) return 'Merienda';
+    return 'Cena';
+  };
+
   const getGIColor = (gi: string) => {
     switch (gi) {
       case 'bajo': return { bg: 'bg-green-50', text: 'text-green-700', border: 'border-green-200' };
@@ -275,6 +330,7 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
         recipeId: selectedRecipe.id,
         recipeName: selectedRecipe.title,
         mealTime: selectedMealTime,
+        time: selectedTime,
         portions: 1,
       });
       if (!ok) return;
@@ -289,7 +345,10 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
         carbs: parseFloat(selectedRecipe.carbs) || 0,
         protein: parseFloat(selectedRecipe.protein) || 0,
         fiber: parseFloat(selectedRecipe.fiber) || 0,
-        calories: parseFloat(selectedRecipe.calories) || 0
+        fat: parseFloat((selectedRecipe as any).fats) || 0,
+        calories: parseFloat(selectedRecipe.calories) || 0,
+        sugar: parseFloat(selectedRecipe.sugars) || 0,
+        sodium: parseFloat(selectedRecipe.sodium) || 0
       }]);
       toast.success('Consumo registrado', { description: `${selectedRecipe.title} agregado a ${selectedMealTime}` });
     }
@@ -300,8 +359,8 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
   };
 
   const handlePhotoRecognition = () => {
-    toast.info('Función no disponible', {
-      description: 'El reconocimiento con foto a través de IA estará disponible próximamente.'
+    toast.info('Próximamente', {
+      description: 'El reconocimiento del plato por fotografía estará disponible en una próxima versión.'
     });
   };
 
@@ -347,7 +406,7 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
               variant="outline" 
               className={`${glycemicImpact.bgColor} ${glycemicImpact.textColor} ${glycemicImpact.borderColor} px-3 py-1.5 text-xs font-bold`}
             >
-              {consumptions.length} {consumptions.length === 1 ? 'comida' : 'comidas'} registradas
+              {consumptions.length} {consumptions.length === 1 ? 'comida registrada' : 'comidas registradas'}
             </Badge>
           </div>
           <p className={`text-xs ${glycemicImpact.textColor} font-medium`}>
@@ -359,7 +418,7 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
       {/* Opciones de agregar consumos */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Button
-          onClick={() => handleOpenAddModal('Desayuno')}
+          onClick={() => handleOpenAddModal(momentoSegunHora())}
           className="bg-gradient-to-r from-purple-600 to-blue-600 hover:from-purple-700 hover:to-blue-700 text-white rounded-xl h-12 font-bold"
         >
           <Plus className="w-5 h-5 mr-2" />
@@ -369,116 +428,138 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
         <Button
           onClick={handlePhotoRecognition}
           variant="outline"
-          className="border-2 border-purple-200 text-purple-700 hover:bg-purple-50 rounded-xl h-12 font-bold"
+          className="border-2 border-gray-200 text-gray-500 rounded-xl h-12 font-bold cursor-not-allowed"
+          aria-disabled="true"
         >
           <Camera className="w-5 h-5 mr-2" />
-          Reconocimiento con Foto (IA)
+          Reconocimiento con foto
+          <span className="ml-2 text-[10px] font-bold uppercase bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full">Próximamente</span>
         </Button>
       </div>
 
-      {/* Registro de comidas por momento del día */}
-      <div className="space-y-4">
-        <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Registro del día</h5>
-        
-        {mealTimes.map((mealTime) => {
-          const mealsForTime = consumptions.filter(c => c.mealTime === mealTime);
-          const MealIcon = getMealIcon(mealTime);
-          
-          return (
-            <div key={mealTime} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
-              <div className="bg-gray-50 px-4 py-3 border-b border-gray-100 flex items-center gap-2">
-                <MealIcon className="w-4 h-4 text-purple-600" />
-                <h6 className="text-sm font-black text-gray-900 flex-1">{mealTime}</h6>
-                {mealsForTime.length > 0 && (
-                  <Badge variant="secondary" className="bg-purple-100 text-purple-700 border-purple-200 text-[10px] px-2 py-0.5">
-                    {mealsForTime.length}
-                  </Badge>
-                )}
-                <Button
-                  size="sm"
-                  variant="ghost"
-                  onClick={() => handleOpenAddModal(mealTime)}
-                  className="h-7 w-7 p-0 hover:bg-purple-100 rounded-lg"
-                >
-                  <Plus className="w-4 h-4 text-purple-600" />
-                </Button>
-              </div>
-              
-              {mealsForTime.length > 0 ? (
-                <div className="divide-y divide-gray-100">
-                  {mealsForTime.map((consumption) => {
-                    const giColors = getGIColor(consumption.glycemicIndex);
-                    return (
-                      <motion.div
-                        key={consumption.id}
-                        initial={{ opacity: 0, x: -10 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        className="p-4 hover:bg-gray-50 transition-colors group"
-                      >
-                        <div className="flex items-start justify-between gap-3 mb-2">
-                          <div className="flex-1">
-                            <h6 className="font-bold text-gray-900 text-sm mb-1">
-                              {consumption.recipeName}
-                            </h6>
-                            <div className="flex items-center gap-2 text-xs text-gray-500">
-                              <Clock className="w-3 h-3" />
-                              <span>{consumption.time}</span>
-                            </div>
-                          </div>
-                          <div className="flex items-start gap-1.5">
-                            <div className="flex flex-col gap-1.5">
-                              <Badge 
-                                variant="outline" 
-                                className={`${giColors.bg} ${giColors.text} ${giColors.border} text-[10px] px-2 py-0.5 justify-center`}
-                              >
-                                IG {consumption.glycemicIndex}
-                              </Badge>
-                              <Badge 
-                                variant="outline" 
-                                className="bg-purple-50 text-purple-700 border-purple-200 text-[10px] px-2 py-0.5 justify-center whitespace-nowrap"
-                              >
-                                Apto DT2
-                              </Badge>
-                            </div>
-                            <Button
-                              size="sm"
-                              variant="ghost"
-                              onClick={() => handleRemoveConsumption(consumption.id)}
-                              className="h-6 w-6 p-0 hover:bg-red-50 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
-                            >
-                              <X className="w-3 h-3 text-red-600" />
-                            </Button>
-                          </div>
-                        </div>
-                        
-                        {/* Info nutricional mini */}
-                        <div className="flex gap-3 text-[10px] text-gray-500 font-medium mt-3 pt-3 border-t border-gray-100">
-                          <span>🔥 {consumption.calories} kcal</span>
-                          <span>🥗 {consumption.carbs}g carbs</span>
-                          <span>🍗 {consumption.protein}g proteína</span>
-                          <span>🌾 {consumption.fiber}g fibra</span>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="p-6 text-center">
-                  <p className="text-sm text-gray-400 mb-2">No hay consumos registrados para este momento</p>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() => handleOpenAddModal(mealTime)}
-                    className="text-purple-600 border-purple-200 hover:bg-purple-50"
-                  >
-                    <Plus className="w-3 h-3 mr-1" />
-                    Agregar platillo
-                  </Button>
-                </div>
-              )}
+      {/* Mis consumos: historial completo; cada consumo se despliega con su detalle */}
+      <div className="space-y-3">
+        <div className="flex items-center justify-between">
+          <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Mis consumos</h5>
+          {listaConsumos.length > 0 && (
+            <span className="text-xs text-gray-500">{listaConsumos.length} {listaConsumos.length === 1 ? 'consumo registrado' : 'consumos registrados'}</span>
+          )}
+        </div>
+
+        {listaConsumos.length === 0 ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200"
+          >
+            <div className="bg-white p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-sm">
+              <Utensils className="w-8 h-8 text-gray-300" />
             </div>
-          );
-        })}
+            <p className="text-gray-600 font-bold mb-1">Hasta la fecha no presentas ningún consumo registrado</p>
+            <p className="text-sm text-gray-400 mb-4">Cuando registres un platillo, aparecerá aquí con la fecha, la hora y el momento del día</p>
+            <Button
+              onClick={() => handleOpenAddModal(momentoSegunHora())}
+              className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Registrar primera comida
+            </Button>
+          </motion.div>
+        ) : (
+          gruposPorFecha.map(([fecha, items]) => (
+            <div key={fecha} className="space-y-2">
+              <p className="text-xs font-bold text-purple-700 capitalize">{etiquetaFecha(fecha)}</p>
+              {items.map((c) => {
+                const abierto = expandido === c.id;
+                const receta = recipes.find(r => r.id === c.recipeId);
+                const giColors = getGIColor(c.glycemicIndex);
+                const MealIcon = getMealIcon(c.mealTime);
+                return (
+                  <div key={c.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+                    <button
+                      onClick={() => setExpandido(abierto ? null : c.id)}
+                      className="w-full flex items-center gap-3 p-3 text-left hover:bg-gray-50 transition-colors"
+                      aria-expanded={abierto}
+                    >
+                      <div className="w-12 h-12 rounded-xl overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
+                        {receta?.image
+                          ? <img src={receta.image} alt={c.recipeName} className="w-full h-full object-cover" />
+                          : <Utensils className="w-5 h-5 text-gray-300" />}
+                      </div>
+                      <span className="flex-1 font-bold text-gray-900 text-sm">{c.recipeName}</span>
+                      <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform ${abierto ? 'rotate-180' : ''}`} />
+                    </button>
+
+                    <AnimatePresence initial={false}>
+                      {abierto && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden"
+                        >
+                          <div className="px-4 pb-4 pt-1 space-y-3 border-t border-gray-100">
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-3 text-xs">
+                              <div className="bg-purple-50 rounded-xl p-2.5">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase">Momento</p>
+                                <p className="font-bold text-purple-800 flex items-center gap-1 mt-0.5"><MealIcon className="w-3.5 h-3.5" />{c.mealTime}</p>
+                              </div>
+                              <div className="bg-purple-50 rounded-xl p-2.5">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase">Hora</p>
+                                <p className="font-bold text-purple-800 flex items-center gap-1 mt-0.5"><Clock className="w-3.5 h-3.5" />{c.time || '—'}</p>
+                              </div>
+                              <div className="bg-purple-50 rounded-xl p-2.5">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase">Fecha</p>
+                                <p className="font-bold text-purple-800 mt-0.5">{c.date ? new Date(c.date + 'T12:00:00').toLocaleDateString('es-CO') : '—'}</p>
+                              </div>
+                              <div className="bg-purple-50 rounded-xl p-2.5">
+                                <p className="text-[10px] font-bold text-gray-500 uppercase">Porción</p>
+                                <p className="font-bold text-purple-800 mt-0.5">{c.portions ?? 1}</p>
+                              </div>
+                            </div>
+                            <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-600">
+                              <span>🔥 {c.calories} kcal</span>
+                              <span>🥗 {c.carbs} g carbohidratos</span>
+                              <span>🍗 {c.protein} g proteína</span>
+                              <span>🌾 {c.fiber} g fibra</span>
+                              {c.sugar != null && <span>🍬 {c.sugar} g azúcares</span>}
+                              {c.sodium != null && <span>🧂 {c.sodium} mg sodio</span>}
+                            </div>
+                            <div className="flex flex-wrap items-center gap-2">
+                              <Badge variant="outline" className={`${giColors.bg} ${giColors.text} ${giColors.border} text-[10px] px-2 py-0.5`}>
+                                IG {c.glycemicIndex}
+                              </Badge>
+                              {c.rating ? <span className="text-xs text-amber-600">{'★'.repeat(c.rating)}{'☆'.repeat(5 - c.rating)}</span> : null}
+                              {c.comment && <span className="text-xs text-gray-500 italic">«{c.comment}»</span>}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleRemoveConsumption(c.id)}
+                                className="ml-auto h-8 text-red-600 hover:bg-red-50 rounded-lg text-xs"
+                              >
+                                <X className="w-3.5 h-3.5 mr-1" /> Eliminar
+                              </Button>
+                            </div>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                );
+              })}
+            </div>
+          ))
+        )}
+
+        {listaConsumos.length > visibles && (
+          <Button
+            variant="outline"
+            onClick={() => setVisibles(visibles + 15)}
+            className="w-full rounded-xl border-purple-200 text-purple-700 hover:bg-purple-50"
+          >
+            Ver más consumos ({listaConsumos.length - visibles} restantes)
+          </Button>
+        )}
       </div>
 
       {/* Resumen nutricional del día */}
@@ -546,23 +627,39 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
               <p className="text-[10px] text-gray-500 mt-1">{dailyTotals.protein}g totales</p>
             </div>
 
-            {/* Fibra */}
+            {/* Grasas */}
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-gray-700">Fibra</span>
-                <span className="text-xs font-black text-green-600">{macrosDistribution.fiber}%</span>
+                <span className="text-xs font-medium text-gray-700">Grasas</span>
+                <span className="text-xs font-black text-yellow-600">{macrosDistribution.fat}%</span>
               </div>
               <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
                 <motion.div 
                   initial={{ width: 0 }}
-                  animate={{ width: `${macrosDistribution.fiber}%` }}
+                  animate={{ width: `${macrosDistribution.fat}%` }}
                   transition={{ duration: 0.5, delay: 0.3 }}
-                  className="h-full bg-green-500 rounded-full"
+                  className="h-full bg-yellow-500 rounded-full"
                 />
               </div>
-              <p className="text-[10px] text-gray-500 mt-1">{dailyTotals.fiber}g totales</p>
+              <p className="text-[10px] text-gray-500 mt-1">{dailyTotals.fat}g totales</p>
             </div>
+            <p className="text-[10px] text-gray-400">Porcentaje de la energía del día que aporta cada macronutriente.</p>
           </div>
+
+          {/* Alertas de sodio y azúcares */}
+          {alertasDelDia.map(a => (
+            <div key={a.clave} className="bg-red-50 border border-red-200 rounded-xl p-4 mb-3">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-red-600">
+                  <AlertTriangle className="w-4 h-4 text-white" />
+                </div>
+                <div className="flex-1">
+                  <h6 className="font-bold text-sm text-red-700 mb-1">{a.titulo}</h6>
+                  <p className="text-xs text-red-700 leading-relaxed">{a.mensaje}</p>
+                </div>
+              </div>
+            </div>
+          ))}
 
           {/* Consejo automático */}
           <div className={`${getAdviceColor(automaticAdvice.color).bg} ${getAdviceColor(automaticAdvice.color).border} border rounded-xl p-4`}>
@@ -583,28 +680,6 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
         </motion.div>
       )}
 
-      {/* Estado vacío */}
-      {consumptions.length === 0 && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          className="text-center py-12 bg-gray-50 rounded-2xl border-2 border-dashed border-gray-200"
-        >
-          <div className="bg-white p-4 rounded-full w-16 h-16 flex items-center justify-center mx-auto mb-4 shadow-sm">
-            <Utensils className="w-8 h-8 text-gray-300" />
-          </div>
-          <p className="text-gray-500 font-medium mb-1">No hay consumos registrados para hoy</p>
-          <p className="text-sm text-gray-400 mb-4">Comienza a registrar tus comidas para obtener recomendaciones personalizadas</p>
-          <Button
-            onClick={() => handleOpenAddModal('Desayuno')}
-            className="bg-purple-600 hover:bg-purple-700 text-white rounded-xl"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Registrar primera comida
-          </Button>
-        </motion.div>
-      )}
-
       {/* Nota informativa */}
       <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-xl border border-blue-100">
         <Info className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
@@ -620,10 +695,10 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl font-black">
               <Plus className="w-5 h-5 text-purple-600" />
-              Agregar Consumo - {selectedMealTime}
+              Agregar consumo
             </DialogTitle>
             <DialogDescription id="add-consumption-description">
-              Busca y selecciona el platillo que consumiste, luego indica la hora
+              Busca el platillo que consumiste, elige el momento del día e indica la hora
             </DialogDescription>
           </DialogHeader>
 
@@ -691,6 +766,23 @@ export function ConsumptionTab({ user, recipes, externalConsumptions = [], onCon
                     <p className="text-sm">No se encontraron platillos</p>
                   </div>
                 )}
+              </div>
+            </div>
+
+            {/* Momento del día */}
+            <div className="space-y-2">
+              <Label className="text-sm font-bold text-gray-700">Momento del día</Label>
+              <div className="flex flex-wrap gap-2">
+                {mealTimes.map((m) => (
+                  <button
+                    key={m}
+                    type="button"
+                    onClick={() => setSelectedMealTime(m)}
+                    className={`px-3 py-1.5 rounded-xl border-2 text-sm font-bold transition-all ${selectedMealTime === m ? 'border-purple-500 bg-purple-50 text-purple-700' : 'border-gray-200 text-gray-600 hover:border-purple-300'}`}
+                  >
+                    {m}
+                  </button>
+                ))}
               </div>
             </div>
 

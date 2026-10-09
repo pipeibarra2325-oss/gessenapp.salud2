@@ -103,7 +103,7 @@ export function TipsSection() {
                     {tip.category}
                   </Badge>
                 </div>
-                <CardTitle className="text-lg group-hover:text-green-700 transition-colors">
+                <CardTitle as="h3" className="text-lg group-hover:text-green-700 transition-colors">
                   {tip.title}
                 </CardTitle>
               </CardHeader>

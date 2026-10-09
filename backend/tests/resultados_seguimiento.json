@@ -1,0 +1,212 @@
+{
+  "fecha": "2026-10-09T12:56:07.949Z",
+  "base_datos": "BD_gessenapp_test",
+  "aprobados": 34,
+  "total": 34,
+  "resultados": [
+    {
+      "id": "SEG-01",
+      "caso": "TFG CKD-EPI 2021 (mujer, 60 años, Cr 1,0)",
+      "estado": "Aprobado",
+      "detalle": "obtenido 64"
+    },
+    {
+      "id": "SEG-02",
+      "caso": "TFG CKD-EPI 2021 (hombre, 60 años, Cr 1,0)",
+      "estado": "Aprobado",
+      "detalle": "obtenido 86"
+    },
+    {
+      "id": "SEG-03",
+      "caso": "Sin alertas con valores en meta",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-04",
+      "caso": "Alertas ante valores fuera de meta (12 indicadores)",
+      "estado": "Aprobado",
+      "detalle": "12 alertas"
+    },
+    {
+      "id": "SEG-05",
+      "caso": "Hipoglucemia y HbA1c ≥ 9 se marcan como prioridad alta",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-06",
+      "caso": "El inicio de sesión informa si el paciente tiene IG medio autorizado",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-07",
+      "caso": "El registro crea la primera medición de la curva de peso",
+      "estado": "Aprobado",
+      "detalle": "IMC 30"
+    },
+    {
+      "id": "SEG-08",
+      "caso": "Rechaza valores fuera de rango o inválidos",
+      "estado": "Aprobado",
+      "detalle": "11/11 rechazados con HTTP 400"
+    },
+    {
+      "id": "SEG-09",
+      "caso": "Sin sesión no se accede al seguimiento",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-10",
+      "caso": "El paciente registra glucemias, HbA1c y peso",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-11",
+      "caso": "Perfil lipídico y creatinina con TFG estimada",
+      "estado": "Aprobado",
+      "detalle": "TFG 45"
+    },
+    {
+      "id": "SEG-12",
+      "caso": "Alertas usan el último valor de cada indicador",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-13",
+      "caso": "Curva de peso ordenada por fecha con IMC",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-14",
+      "caso": "El peso del perfil queda con la medición más reciente",
+      "estado": "Aprobado",
+      "detalle": "peso 72.00"
+    },
+    {
+      "id": "SEG-15",
+      "caso": "Actualizar el peso en el perfil agrega una medición (sin duplicar)",
+      "estado": "Aprobado",
+      "detalle": "3 mediciones"
+    },
+    {
+      "id": "SEG-16",
+      "caso": "El profesional registra el tamizaje de sarcopenia",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-17",
+      "caso": "El registro indica quién lo hizo",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-18",
+      "caso": "El paciente ve lo que registró el profesional",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-19",
+      "caso": "Un paciente no accede al seguimiento de otros (ruta admin)",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-20",
+      "caso": "El seguimiento de un administrador no existe (404)",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-21",
+      "caso": "Identificador no numérico responde 400",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-22",
+      "caso": "Un paciente no elimina registros de otro paciente",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-23",
+      "caso": "El profesional elimina un registro (y queda en el log)",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-24",
+      "caso": "Autorización IG medio valida el cuerpo",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-25",
+      "caso": "No se autoriza IG medio a un administrador",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-26",
+      "caso": "Sin autorización, la IA solo sugiere IG bajo",
+      "estado": "Aprobado",
+      "detalle": "12 sugerencias"
+    },
+    {
+      "id": "SEG-27",
+      "caso": "El profesional autoriza IG medio y el paciente lo recibe al iniciar sesión",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-28",
+      "caso": "Con autorización, la IA puede sugerir IG medio y nunca alto",
+      "estado": "Aprobado",
+      "detalle": "1 de IG medio"
+    },
+    {
+      "id": "SEG-29",
+      "caso": "Con IMC ≥ 25 la IA prioriza menos calorías y lo explica",
+      "estado": "Aprobado",
+      "detalle": "IMC 29.1"
+    },
+    {
+      "id": "SEG-30",
+      "caso": "Las 6 primeras sugerencias con IMC ≥ 25 tienen menos calorías que con IMC normal",
+      "estado": "Aprobado",
+      "detalle": "200 kcal frente a 294 kcal"
+    },
+    {
+      "id": "SEG-31",
+      "caso": "El reporte del paciente incluye el seguimiento clínico",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-32",
+      "caso": "Evolución del IMC promedio de la población por mes",
+      "estado": "Aprobado",
+      "detalle": "7 meses"
+    },
+    {
+      "id": "SEG-33",
+      "caso": "La evolución poblacional exige rol de administrador",
+      "estado": "Aprobado",
+      "detalle": ""
+    },
+    {
+      "id": "SEG-34",
+      "caso": "Al retirar la autorización vuelve a solo IG bajo",
+      "estado": "Aprobado",
+      "detalle": ""
+    }
+  ]
+}

@@ -1,7 +1,7 @@
 {
-  "fecha": "2026-09-25T19:22:07.841Z",
-  "aprobados": 51,
-  "total": 51,
+  "fecha": "2026-10-09T12:56:05.894Z",
+  "aprobados": 68,
+  "total": 68,
   "resultados": [
     {
       "id": "AUT-01",
@@ -24,7 +24,7 @@
       "modulo": "Autenticación",
       "descripcion": "Registro con datos inválidos (peso de -5 kg)",
       "esperado": "HTTP 400",
-      "obtenido": "HTTP 400: El peso debe estar entre 20 y 300 kg",
+      "obtenido": "HTTP 400: El peso (kg) debe estar entre 20 y 300",
       "estado": "Aprobado"
     },
     {
@@ -40,7 +40,7 @@
       "modulo": "Autenticación",
       "descripcion": "Inicio de sesión correcto devuelve token e id del usuario",
       "esperado": "HTTP 200 con user.id",
-      "obtenido": "HTTP 200, user.id = 22, región: Pacífica",
+      "obtenido": "HTTP 200, user.id = 270, región: Andina",
       "estado": "Aprobado"
     },
     {
@@ -48,7 +48,7 @@
       "modulo": "Autenticación",
       "descripcion": "Inicio de sesión con contraseña incorrecta queda en los logs",
       "esperado": "HTTP 401 y log LOGIN_FALLIDO",
-      "obtenido": "HTTP 401, logs LOGIN_FALLIDO: 8 → 9",
+      "obtenido": "HTTP 401, logs LOGIN_FALLIDO: 254 → 255",
       "estado": "Aprobado"
     },
     {
@@ -70,9 +70,9 @@
     {
       "id": "PLA-01",
       "modulo": "Catálogo",
-      "descripcion": "Consulta del catálogo de platillos",
-      "esperado": "HTTP 200 y 96 platillos",
-      "obtenido": "HTTP 200, 96 platillos",
+      "descripcion": "Consulta del catálogo de platillos (solo se publican las recetas con ingredientes)",
+      "esperado": "HTTP 200 y todas las recetas con ingredientes",
+      "obtenido": "HTTP 200, 105 platillos publicados de 105 con ingredientes",
       "estado": "Aprobado"
     },
     {
@@ -80,15 +80,31 @@
       "modulo": "Catálogo",
       "descripcion": "Los nutrientes no se duplican en platillos con varios sabores o preferencias",
       "esperado": "Calorías iguales al cálculo directo en todos los platillos",
-      "obtenido": "96 de 96 coinciden (3 con varios sabores/preferencias)",
+      "obtenido": "105 de 105 coinciden (3 con varios sabores/preferencias)",
       "estado": "Aprobado"
     },
     {
       "id": "PLA-03",
       "modulo": "Catálogo",
-      "descripcion": "Cada platillo tiene imagen asignada",
-      "esperado": "96 de 96 con imagen",
-      "obtenido": "96 de 96 con imagen",
+      "descripcion": "Los 96 platillos del catálogo base tienen imagen asignada",
+      "esperado": "96 o más con imagen",
+      "obtenido": "97 de 105 con imagen",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PLA-04",
+      "modulo": "Catálogo",
+      "descripcion": "Coherencia de las recetas: cada platillo publicado tiene ingredientes y ninguno lleva más de 20 g de aceite",
+      "esperado": "Todos los publicados coherentes",
+      "obtenido": "105 de 105 coherentes; Pan blanco con mermelada: Mantequilla (10.0 g), Mermelada (30.0 g), Pan blanco (80.0 g)",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "PLA-05",
+      "modulo": "Catálogo",
+      "descripcion": "Carga glucémica calculada con el índice glucémico y los carbohidratos de cada ingrediente",
+      "esperado": "Igual al cálculo directo (Pan blanco con mermelada)",
+      "obtenido": "API: 40; cálculo directo: 40",
       "estado": "Aprobado"
     },
     {
@@ -104,7 +120,7 @@
       "modulo": "Favoritos",
       "descripcion": "Paciente consulta sus favoritos",
       "esperado": "Lista con el platillo agregado",
-      "obtenido": "HTTP 200, [\"70\"]",
+      "obtenido": "HTTP 200, [\"125\"]",
       "estado": "Aprobado"
     },
     {
@@ -120,7 +136,15 @@
       "modulo": "Registro de consumos",
       "descripcion": "Paciente registra un consumo",
       "esperado": "HTTP 201 y log REGISTRAR_CONSUMO",
-      "obtenido": "HTTP 201, logs: 6 → 7",
+      "obtenido": "HTTP 201, logs: 2220 → 2221",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CAL-01",
+      "modulo": "Catálogo",
+      "descripcion": "La calificación registrada con el consumo aparece en el catálogo",
+      "esperado": "Promedio y total iguales a los de la base, con la calificación del paciente",
+      "obtenido": "HTTP 200, catálogo: 5 con 1; base: 5 con 1",
       "estado": "Aprobado"
     },
     {
@@ -152,7 +176,7 @@
       "modulo": "Registro de consumos",
       "descripcion": "Paciente consulta sus consumos de hoy con su aporte nutricional",
       "esperado": "El consumo registrado aparece con calorías y hora",
-      "obtenido": "HTTP 200, 1 registro(s): Arepa blanca con queso 393.2 kcal a las 14:22",
+      "obtenido": "HTTP 200, 1 registro(s): <b>Arepa</b> con \"comillas\" & símbolos (R3) 240.5 kcal a las 07:56",
       "estado": "Aprobado"
     },
     {
@@ -161,6 +185,22 @@
       "descripcion": "Paciente elimina su propio consumo",
       "esperado": "HTTP 200 y ya no aparece",
       "obtenido": "HTTP 200, quedan 0",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-08",
+      "modulo": "Registro de consumos",
+      "descripcion": "Registro con la hora indicada por el paciente",
+      "esperado": "HTTP 201 y la hora guardada es 07:30",
+      "obtenido": "HTTP 201, hora guardada: 07:30",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-09",
+      "modulo": "Registro de consumos",
+      "descripcion": "Registro con una hora inválida",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400: La hora debe tener el formato HH:MM",
       "estado": "Aprobado"
     },
     {
@@ -184,7 +224,7 @@
       "modulo": "Perfil",
       "descripcion": "Actualizar el perfil con una estatura imposible",
       "esperado": "HTTP 400",
-      "obtenido": "HTTP 400: La estatura debe estar entre 50 y 250 cm",
+      "obtenido": "HTTP 400: La estatura (cm) debe estar entre 50 y 250",
       "estado": "Aprobado"
     },
     {
@@ -212,6 +252,14 @@
       "estado": "Aprobado"
     },
     {
+      "id": "PER-07",
+      "modulo": "Perfil",
+      "descripcion": "Paciente de la costa de Nariño elige la región Pacífica y el inicio de sesión la devuelve",
+      "esperado": "Región Pacífica; al restablecer, Andina (región por defecto de Nariño)",
+      "obtenido": "elegida: Pacífica; por departamento: Andina",
+      "estado": "Aprobado"
+    },
+    {
       "id": "PER-06",
       "modulo": "Perfil",
       "descripcion": "Actualizar el perfil sin sesión",
@@ -232,7 +280,7 @@
       "modulo": "Panel",
       "descripcion": "Dashboard con indicadores",
       "esperado": "HTTP 200 con totales",
-      "obtenido": "platillos 96, consumos 32, usuarios 4",
+      "obtenido": "platillos 107, consumos 3705, usuarios 108",
       "estado": "Aprobado"
     },
     {
@@ -248,7 +296,7 @@
       "modulo": "Recetas",
       "descripcion": "Crear un platillo desde el panel",
       "esperado": "HTTP 201 y log CREAR_PLATILLO",
-      "obtenido": "HTTP 201, id 102",
+      "obtenido": "HTTP 201, id 129",
       "estado": "Aprobado"
     },
     {
@@ -276,11 +324,43 @@
       "estado": "Aprobado"
     },
     {
+      "id": "ING-01",
+      "modulo": "Recetas",
+      "descripcion": "Lista de ingredientes disponibles en el panel",
+      "esperado": "HTTP 200 con 72 ingredientes",
+      "obtenido": "HTTP 200, 72 ingredientes",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ING-02",
+      "modulo": "Recetas",
+      "descripcion": "Asignar ingredientes a un platillo desde el panel recalcula su aporte",
+      "esperado": "100 g de pollo + 100 g de brócoli = 199 kcal",
+      "obtenido": "HTTP 200, 199 kcal, log: 92 → 93",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ING-03",
+      "modulo": "Recetas",
+      "descripcion": "Asignar un ingrediente con cantidad inválida",
+      "esperado": "HTTP 400",
+      "obtenido": "HTTP 400: Cada cantidad debe estar entre 1 y 2000 g",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ING-04",
+      "modulo": "Seguridad",
+      "descripcion": "Paciente intenta cambiar los ingredientes de un platillo",
+      "esperado": "HTTP 403",
+      "obtenido": "HTTP 403",
+      "estado": "Aprobado"
+    },
+    {
       "id": "REC-05",
       "modulo": "Recetas",
       "descripcion": "Eliminar un platillo que tiene consumos registrados",
       "esperado": "HTTP 409 con mensaje",
-      "obtenido": "HTTP 409: No se puede eliminar: el platillo tiene 1 consumo(s) registrados en el historial de los pacientes",
+      "obtenido": "HTTP 409: No se puede eliminar: el platillo tiene 13 consumo(s) registrados en el historial de los pacientes",
       "estado": "Aprobado"
     },
     {
@@ -304,7 +384,7 @@
       "modulo": "Reporte PDF",
       "descripcion": "Los totales del reporte coinciden con la suma de los registros",
       "esperado": "Diferencia menor de 1 kcal",
-      "obtenido": "suma 12944.4 kcal; total 12944.4 kcal; promedio diario 3236.1 kcal",
+      "obtenido": "suma 4400.0 kcal; total 4400 kcal; promedio diario 1100 kcal",
       "estado": "Aprobado"
     },
     {
@@ -328,7 +408,7 @@
       "modulo": "Reporte PDF",
       "descripcion": "La descarga del informe queda en los logs",
       "esperado": "Log DESCARGAR_REPORTE_PDF",
-      "obtenido": "logs: 5 → 6",
+      "obtenido": "logs: 24 → 25",
       "estado": "Aprobado"
     },
     {
@@ -337,6 +417,62 @@
       "descripcion": "Fecha con formato inválido",
       "esperado": "HTTP 400",
       "obtenido": "HTTP 400",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "CON-10",
+      "modulo": "Registro de consumos",
+      "descripcion": "Historial completo del paciente para «Mis consumos»",
+      "esperado": "11 registros, del más reciente al más antiguo, con fecha y hora",
+      "obtenido": "HTTP 200, 11 registros, ordenados: sí, con fecha, hora y momento: sí",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ML-01",
+      "modulo": "Aprendizaje automático",
+      "descripcion": "Estado del modelo de recomendación en el panel",
+      "esperado": "Modelo entrenado con métricas de validación",
+      "obtenido": "HTTP 200, HitRate@10 modelo 0.404, popularidad 0.344",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ML-02",
+      "modulo": "Aprendizaje automático",
+      "descripcion": "Reentrenar el modelo desde el panel",
+      "esperado": "HTTP 200 y log ENTRENAR_MODELO",
+      "obtenido": "HTTP 200, 1146 interacciones de 38 pacientes, log: 33 → 34",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ML-03",
+      "modulo": "Aprendizaje automático",
+      "descripcion": "Sugerencias personalizadas para un paciente con historial",
+      "esperado": "Modo ml, 6 sugerencias y ninguna de índice glucémico alto",
+      "obtenido": "HTTP 200, modo ml, 6 sugerencias, de IG alto: 0",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ML-04",
+      "modulo": "Aprendizaje automático",
+      "descripcion": "Usuario sin historial recibe sugerencias de inicio en frío",
+      "esperado": "Modo inicio_en_frio",
+      "obtenido": "HTTP 200, modo inicio_en_frio",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ML-06",
+      "modulo": "Aprendizaje automático",
+      "descripcion": "La vista del detalle de un platillo queda como interacción para el modelo",
+      "esperado": "HTTP 201 y evento view en user_interactions",
+      "obtenido": "HTTP 201, vistas: 0 → 1; id inválido: HTTP 400",
+      "estado": "Aprobado"
+    },
+    {
+      "id": "ML-05",
+      "modulo": "Seguridad",
+      "descripcion": "Paciente intenta reentrenar el modelo",
+      "esperado": "HTTP 403",
+      "obtenido": "HTTP 403",
       "estado": "Aprobado"
     },
     {
@@ -360,7 +496,7 @@
       "modulo": "Configuración",
       "descripcion": "Guardar y leer la configuración",
       "esperado": "El valor guardado se lee de vuelta",
-      "obtenido": "HTTP 200, app_name = GessenApp Pruebas, tamaño BD = 10062 kB",
+      "obtenido": "HTTP 200, app_name = GessenApp Pruebas, tamaño BD = 12 MB",
       "estado": "Aprobado"
     },
     {
@@ -376,7 +512,7 @@
       "modulo": "Logs",
       "descripcion": "Consulta de los logs",
       "esperado": "Incluye inicios de sesión y acciones del panel",
-      "obtenido": "HTTP 200, 110 eventos",
+      "obtenido": "HTTP 200, 3896 eventos",
       "estado": "Aprobado"
     },
     {
@@ -384,7 +520,7 @@
       "modulo": "Logs",
       "descripcion": "Filtro de logs por acción",
       "esperado": "Solo eventos de la acción elegida",
-      "obtenido": "21 eventos LOGIN",
+      "obtenido": "50 eventos LOGIN",
       "estado": "Aprobado"
     },
     {
@@ -408,7 +544,7 @@
       "modulo": "Desempeño",
       "descripcion": "Tiempo de respuesta del catálogo (30 solicitudes)",
       "esperado": "Percentil 95 menor de 1000 ms",
-      "obtenido": "media 15 ms; p95 18 ms",
+      "obtenido": "media 5 ms; p95 7 ms",
       "estado": "Aprobado"
     }
   ]

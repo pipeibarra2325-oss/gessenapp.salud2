@@ -20,6 +20,13 @@ export const crearUsuario = async (data) => {
   return await response.json();
 };
 
+// Regiones alimentarias (Andina, Pacífica, ...) para que el usuario elija la suya
+export const obtenerRegiones = async () => {
+  const res = await fetch(`${API_URL}/regiones`);
+  if (!res.ok) throw new Error("Error al obtener regiones");
+  return res.json();
+};
+
 export const obtenerDepartamentos = async () => {
   try {
     const response = await fetch(`${API_URL}/departamentos`, {
@@ -103,6 +110,37 @@ export const obtenerMisConsumos = async (fecha) => {
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || 'Error al obtener los consumos');
   }
+  return await response.json();
+};
+
+// Todo el historial de consumos del usuario autenticado, del más reciente al más antiguo
+export const obtenerHistorialConsumos = async () => {
+  const response = await fetch(`${API_URL}/platillos/consumos?todos=1`, { headers: getAuthHeaders() });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Error al obtener el historial de consumos');
+  }
+  return await response.json();
+};
+
+// Sugerencias del modelo de aprendizaje automático para el usuario autenticado
+export const obtenerRecomendacionesML = async (limite = 6) => {
+  const response = await fetch(`${API_URL}/platillos/recomendaciones-ml?limite=${limite}`, { headers: getAuthHeaders() });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Error al obtener las recomendaciones');
+  }
+  return await response.json();
+};
+
+// Registra que el usuario abrió el detalle de un platillo (retroalimentación implícita para el modelo)
+export const registrarInteraccion = async (platilloId) => {
+  const response = await fetch(`${API_URL}/platillos/interaccion`, {
+    method: "POST",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ platilloId: Number(platilloId) }),
+  });
+  if (!response.ok) throw new Error('No se pudo registrar la interacción');
   return await response.json();
 };
 

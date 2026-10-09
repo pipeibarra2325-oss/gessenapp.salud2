@@ -1,9 +1,10 @@
 // src/admin/platillos/page.tsx
 import { useState, useEffect } from "react";
 import { Card, CardContent } from "../../components/ui/card";
-import { Edit, Trash2, Plus, Search } from "lucide-react";
+import { Edit, Trash2, Plus, Search, ListChecks } from "lucide-react";
 import { getAuthHeaders, apiUrl } from "../../utils/auth";
 import { toast } from "sonner";
+import { IngredientesModal } from "./IngredientesModal";
 
 interface Platillo {
   id_platillo: number;
@@ -18,6 +19,7 @@ interface Platillo {
   imagen_credito: string | null;
   calorias: number;
   consumos: number;
+  ingredientes?: number;
 }
 
 const NIVELES = ["Bajo", "Medio", "Alto"];
@@ -47,6 +49,7 @@ export default function PlatillosPage() {
   const [platilloForm, setPlatilloForm] = useState<any>(null);
   const [imagenFile, setImagenFile] = useState<File | null>(null);
   const [guardando, setGuardando] = useState(false);
+  const [platilloIngredientes, setPlatilloIngredientes] = useState<Platillo | null>(null);
 
   const fetchPlatillos = async () => {
     try {
@@ -171,7 +174,8 @@ export default function PlatillosPage() {
 
       if (!res.ok) throw new Error(await leerError(res, "Error al guardar la receta"));
 
-      toast.success(modo === "crear" ? "Receta creada correctamente" : "Receta actualizada correctamente");
+      toast.success(modo === "crear" ? "Receta creada correctamente" : "Receta actualizada correctamente",
+        modo === "crear" ? { description: "Asígnale sus ingredientes: la receta aparece en el catálogo de los pacientes cuando los tiene." } : undefined);
       setOpenModal(false);
       await fetchPlatillos();
     } catch (error: any) {
@@ -203,14 +207,14 @@ export default function PlatillosPage() {
           <p className="text-muted-foreground">{platillos.length} platillos en el sistema</p>
         </div>
 
-        <div className="flex gap-3">
-          <div className="relative">
+        <div className="flex flex-wrap gap-3 w-full sm:w-auto">
+          <div className="relative flex-1 sm:flex-none">
             <Search className="w-4 h-4 absolute left-3 top-3.5 text-muted-foreground" />
             <input
               value={busqueda}
               onChange={(e) => setBusqueda(e.target.value)}
               placeholder="Buscar receta"
-              className="pl-9 pr-3 py-2.5 border rounded-2xl"
+              className="pl-9 pr-3 py-2.5 border rounded-2xl w-full"
             />
           </div>
           <button
@@ -238,6 +242,12 @@ export default function PlatillosPage() {
                 <span className={`px-2 py-0.5 rounded-full ${colorNivel(p.nivel_glucemico)}`}>IG {p.nivel_glucemico}</span>
                 {p.categoria && <span className="px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">{p.categoria}</span>}
                 <span className="px-2 py-0.5 rounded-full bg-gray-100 text-gray-700">{Math.round(p.calorias)} kcal</span>
+                {p.ingredientes === 0 && (
+                  <span className="px-2 py-0.5 rounded-full bg-amber-100 text-amber-800 font-semibold"
+                    title="Los pacientes no la ven hasta que tenga ingredientes">
+                    Sin publicar: agrega ingredientes
+                  </span>
+                )}
               </div>
               <h3 className="font-bold text-lg line-clamp-2">{p.nombre_platillo}</h3>
               <p className="text-sm text-muted-foreground line-clamp-3">{p.descripcion}</p>
@@ -249,6 +259,13 @@ export default function PlatillosPage() {
                   className="flex-1 border py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
                 >
                   <Edit className="w-4 h-4 inline mr-1" /> Editar
+                </button>
+
+                <button
+                  onClick={() => setPlatilloIngredientes(p)}
+                  className="flex-1 border py-2.5 rounded-xl hover:bg-gray-50 transition-colors"
+                >
+                  <ListChecks className="w-4 h-4 inline mr-1" /> Ingredientes
                 </button>
 
                 <button
@@ -264,6 +281,14 @@ export default function PlatillosPage() {
         ))}
       </div>
 
+      {platilloIngredientes && (
+        <IngredientesModal
+          platillo={platilloIngredientes}
+          onClose={() => setPlatilloIngredientes(null)}
+          onGuardado={fetchPlatillos}
+        />
+      )}
+
       {openModal && (
         <div className="fixed inset-0 bg-black/50 flex justify-center items-center z-50">
           <div className="bg-white p-6 rounded-2xl w-full max-w-lg max-h-[90vh] overflow-auto space-y-4">
@@ -273,6 +298,7 @@ export default function PlatillosPage() {
 
             <input
               placeholder="Nombre del platillo"
+              maxLength={150}
               className="w-full border p-3 rounded-xl"
               value={platilloForm.nombre_platillo}
               onChange={(e) => setPlatilloForm({ ...platilloForm, nombre_platillo: e.target.value })}
@@ -280,6 +306,7 @@ export default function PlatillosPage() {
 
             <textarea
               placeholder="Descripción"
+              maxLength={2000}
               className="w-full border p-3 rounded-xl min-h-[80px]"
               value={platilloForm.descripcion || ""}
               onChange={(e) => setPlatilloForm({ ...platilloForm, descripcion: e.target.value })}
@@ -315,6 +342,7 @@ export default function PlatillosPage() {
                 <input
                   type="number"
                   min={0}
+                  max={5000}
                   className="w-full border p-3 rounded-xl"
                   value={platilloForm.porcion_gramos}
                   onChange={(e) => setPlatilloForm({ ...platilloForm, porcion_gramos: e.target.value })}
@@ -325,6 +353,8 @@ export default function PlatillosPage() {
                 <input
                   type="number"
                   min={0}
+                  max={1440}
+                  step={1}
                   className="w-full border p-3 rounded-xl"
                   value={platilloForm.tiempo_preparacion}
                   onChange={(e) => setPlatilloForm({ ...platilloForm, tiempo_preparacion: e.target.value })}
@@ -352,6 +382,7 @@ export default function PlatillosPage() {
               />
               <input
                 placeholder="O pega la URL de una imagen"
+                maxLength={1000}
                 className="w-full border p-3 rounded-xl text-sm"
                 value={platilloForm.imagen_url}
                 onChange={(e) => setPlatilloForm({ ...platilloForm, imagen_url: e.target.value, imagen_credito: "" })}
@@ -359,6 +390,7 @@ export default function PlatillosPage() {
               />
               <input
                 placeholder="Crédito de la imagen (autor y licencia)"
+                maxLength={300}
                 className="w-full border p-3 rounded-xl text-sm"
                 value={platilloForm.imagen_credito}
                 onChange={(e) => setPlatilloForm({ ...platilloForm, imagen_credito: e.target.value })}

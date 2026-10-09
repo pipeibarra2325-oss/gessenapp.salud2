@@ -1,12 +1,14 @@
 import { Heart, Menu, User, UserPlus, LogOut, Settings, UserCircle, Info } from 'lucide-react';
-import { useState } from 'react';
+import { useState, lazy, Suspense } from 'react';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription, SheetHeader } from './ui/sheet';
 import { LoginModal } from './LoginModal';
 import { RegisterModal } from './RegisterModal';
+import { ForgotPasswordModal } from './ForgotPasswordModal';
 import { SettingsModal } from './SettingsModal';
 import { EditarPerfilModal } from './EditarPerfilModal';
-import { AboutMeModal } from './AboutMeModal';
+// Usa gráficas: se descarga solo cuando se abre
+const AboutMeModal = lazy(() => import('./AboutMeModal').then((m) => ({ default: m.AboutMeModal })));
 import { motion, AnimatePresence } from 'motion/react';
 import {
   DropdownMenu,
@@ -27,6 +29,7 @@ interface HeaderProps {
 export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
   const [loginModalOpen, setLoginModalOpen] = useState(false);
   const [registerModalOpen, setRegisterModalOpen] = useState(false);
+  const [olvidoOpen, setOlvidoOpen] = useState(false);
   const [settingsModalOpen, setSettingsModalOpen] = useState(false);
   const [editarPerfilOpen, setEditarPerfilOpen] = useState(false);
   const [aboutMeModalOpen, setAboutMeModalOpen] = useState(false);
@@ -88,7 +91,7 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white shadow-md shadow-green-100"
+                        className="bg-green-700 hover:bg-green-800 text-white shadow-md shadow-green-100"
                         onClick={handleSwitchToLogin}
                       >
                         <User className="h-4 w-4 mr-2" />
@@ -105,7 +108,7 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
                     >
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="relative h-10 w-10 rounded-full border border-green-100 p-0 hover:bg-green-50 shadow-sm ring-2 ring-green-50 ring-offset-2 overflow-hidden group">
+                          <Button variant="ghost" aria-label="Menú de la cuenta" className="relative h-10 w-10 rounded-full border border-green-100 p-0 hover:bg-green-50 shadow-sm ring-2 ring-green-50 ring-offset-2 overflow-hidden group">
                             <div className="bg-green-600 w-full h-full flex items-center justify-center group-hover:bg-green-700 transition-colors">
                               <span className="text-white font-bold text-sm">
                                 {user?.name?.[0] || 'U'}
@@ -154,7 +157,7 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
               {isLoggedIn && (
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="rounded-full bg-green-50">
+                    <Button variant="ghost" size="icon" aria-label="Menú de la cuenta" className="rounded-full bg-green-50">
                       <UserCircle className="h-6 w-6 text-green-600" />
                     </Button>
                   </DropdownMenuTrigger>
@@ -181,7 +184,7 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
 
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="ghost" size="icon">
+                  <Button variant="ghost" size="icon" aria-label="Abrir menú">
                     <Menu className="h-6 w-6" />
                   </Button>
                 </SheetTrigger>
@@ -204,7 +207,7 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
                       {!isLoggedIn ? (
                         <>
                           <Button variant="outline" onClick={handleSwitchToRegister}>Registrarse</Button>
-                          <Button className="bg-green-600" onClick={handleSwitchToLogin}>Iniciar Sesión</Button>
+                          <Button className="bg-green-700" onClick={handleSwitchToLogin}>Iniciar Sesión</Button>
                         </>
                       ) : (
                         <div className="space-y-2">
@@ -233,7 +236,13 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
         open={loginModalOpen} 
         onClose={() => setLoginModalOpen(false)} 
         onSwitchToRegister={handleSwitchToRegister} 
+        onSwitchToForgotPassword={() => { setLoginModalOpen(false); setOlvidoOpen(true); }}
         onLoginSuccess={onLogin} 
+      />
+      <ForgotPasswordModal
+        open={olvidoOpen}
+        onClose={() => setOlvidoOpen(false)}
+        onBackToLogin={() => { setOlvidoOpen(false); setLoginModalOpen(true); }}
       />
       <RegisterModal 
         open={registerModalOpen} 
@@ -241,6 +250,8 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
         onSwitchToLogin={handleSwitchToLogin} 
         onRegisterSuccess={onLogin} 
       />
+      {aboutMeModalOpen && (
+      <Suspense fallback={null}>
       <AboutMeModal 
         open={aboutMeModalOpen} 
         onClose={() => setAboutMeModalOpen(false)} 
@@ -253,6 +264,8 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
         isLoggedIn={isLoggedIn} 
         region={null} 
       />
+      </Suspense>
+      )}
       <EditarPerfilModal
         open={editarPerfilOpen}
         onClose={() => setEditarPerfilOpen(false)}

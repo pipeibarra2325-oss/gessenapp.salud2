@@ -20,7 +20,7 @@ export function DiabetesInfoSection() {
           {/* What is Type 2 Diabetes */}
           <Card className="border-blue-100">
             <CardHeader>
-              <CardTitle className="flex items-center text-blue-800">
+              <CardTitle as="h3" className="flex items-center text-blue-800 text-base font-medium">
                 <TrendingUp className="mr-3 h-6 w-6" />
                 ¿Qué es la Diabetes Tipo 2?
               </CardTitle>
@@ -45,7 +45,7 @@ export function DiabetesInfoSection() {
           {/* Risk Factors */}
           <Card className="border-orange-100">
             <CardHeader>
-              <CardTitle className="flex items-center text-orange-800">
+              <CardTitle as="h3" className="flex items-center text-orange-800 text-base font-medium">
                 <AlertTriangle className="mr-3 h-6 w-6" />
                 Factores de Riesgo
               </CardTitle>

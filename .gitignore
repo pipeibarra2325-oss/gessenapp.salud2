@@ -38,3 +38,10 @@ build/
 # Sistema
 .DS_Store
 Thumbs.db
+
+# Copias de seguridad de la base de datos (contienen datos y contraseñas cifradas de usuarios)
+database/respaldo*.sql
+*.backup
+
+# Imágenes subidas desde el panel (contenido de cada instalación)
+backend/uploads/

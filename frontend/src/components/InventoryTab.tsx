@@ -53,9 +53,12 @@ export function InventoryTab({ user, recipes, onFilterChange }: InventoryTabProp
     return combined;
   }, [ingredientsInput, selectedIngredients]);
 
-  // Filtrar recetas
-  const filteredRecipes = useMemo(() => {
-    if (!hasSearched || allIngredients.length === 0) return [];
+  // Filtrar recetas. «exactas» indica si hubo coincidencias con los ingredientes; si no, se ofrecen
+  // recetas de índice glucémico bajo como alternativa y la pantalla lo dice
+  const resultado = useMemo(() => {
+    if (!hasSearched || allIngredients.length === 0) return { lista: [] as Recipe[], exactas: false };
+    const tiene = (recipe: Recipe, palabras: string[]) =>
+      recipe.ingredients.some(ing => palabras.some(p => ing.toLowerCase().includes(p)));
 
     let filtered = recipes.filter(recipe => {
       // SIEMPRE filtrar por índice glucémico bajo (requisito para diabetes tipo 2)
@@ -79,34 +82,26 @@ export function InventoryTab({ user, recipes, onFilterChange }: InventoryTabProp
       }
 
       if (exclusions.noAddedSugar) {
-        // Verificar que no tenga azúcar añadida en descripción o título
-        const hasSugar = recipe.title.toLowerCase().includes('azúcar') || 
-                        recipe.description.toLowerCase().includes('azúcar');
+        // Azúcar añadida en el nombre, la descripción o los ingredientes de la receta
+        const hasSugar = recipe.title.toLowerCase().includes('azúcar') ||
+                        recipe.description.toLowerCase().includes('azúcar') ||
+                        tiene(recipe, ['azúcar', 'leche condensada', 'mermelada', 'panela', 'miel']);
         if (hasSugar) return false;
       }
 
       if (exclusions.reduceRefinedFlours) {
-        // Evitar recetas con harinas refinadas
-        const hasRefinedFlour = recipe.ingredients.some(ing => 
-          ing.toLowerCase().includes('harina blanca') || 
-          ing.toLowerCase().includes('harina refinada') ||
-          ing.toLowerCase().includes('pan blanco')
-        );
-        if (hasRefinedFlour) return false;
+        // Harinas refinadas entre los ingredientes
+        if (tiene(recipe, ['harina', 'pan blanco', 'galleta', 'pasta'])) return false;
       }
 
       return true;
     });
 
-    // Si no hay resultados, buscar recetas similares (solo por IG bajo y región)
-    if (filtered.length === 0) {
-      filtered = recipes.filter(recipe => recipe.glycemicIndex === 'bajo');
-      // Limitar a 5 recetas similares
-      filtered = filtered.slice(0, 5);
-    }
-
-    return filtered;
+    if (filtered.length > 0) return { lista: filtered, exactas: true };
+    // Sin coincidencias: alternativa de 5 recetas de índice glucémico bajo
+    return { lista: recipes.filter(recipe => recipe.glycemicIndex === 'bajo').slice(0, 5), exactas: false };
   }, [recipes, allIngredients, exclusions, hasSearched]);
+  const filteredRecipes = resultado.lista;
 
   useEffect(() => {
     if (hasSearched) {
@@ -289,7 +284,7 @@ export function InventoryTab({ user, recipes, onFilterChange }: InventoryTabProp
         <div className="flex flex-wrap gap-2">
           <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 px-3 py-1.5 flex items-center gap-1.5">
             <MapPin className="w-3.5 h-3.5" />
-            Región: {region}
+            Ingredientes sugeridos de la región {region}
           </Badge>
           <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 px-3 py-1.5 flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5" />
@@ -338,17 +333,21 @@ export function InventoryTab({ user, recipes, onFilterChange }: InventoryTabProp
         >
           <div className="flex items-center justify-between mb-3">
             <h5 className="text-sm font-black text-gray-900">
-              {filteredRecipes.length > 0 ? 'Recetas encontradas' : 'No hay coincidencias exactas'}
+              {resultado.exactas ? 'Recetas encontradas' : 'No hay coincidencias exactas'}
             </h5>
             <Badge variant="outline" className="bg-blue-600 text-white border-blue-700 px-3 py-1">
               {filteredRecipes.length} {filteredRecipes.length === 1 ? 'receta' : 'recetas'}
             </Badge>
           </div>
-          {filteredRecipes.length === 0 ? (
+          {!resultado.exactas ? (
             <div className="text-center py-6 bg-yellow-50 rounded-xl border border-yellow-200">
               <AlertCircle className="w-10 h-10 mx-auto mb-2 text-yellow-600" />
               <p className="text-sm text-yellow-800 font-medium">No encontramos recetas con estos ingredientes.</p>
-              <p className="text-xs text-yellow-700 mt-1">Intenta con otros ingredientes o reduce las exclusiones.</p>
+              <p className="text-xs text-yellow-700 mt-1">
+                {filteredRecipes.length > 0
+                  ? 'Abajo te mostramos recetas de índice glucémico bajo como alternativa. Intenta con otros ingredientes o reduce las exclusiones.'
+                  : 'Intenta con otros ingredientes o reduce las exclusiones.'}
+              </p>
             </div>
           ) : (
             <div className="bg-green-50 rounded-xl border border-green-200 p-4">

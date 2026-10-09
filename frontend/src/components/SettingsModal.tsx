@@ -49,6 +49,10 @@ export function SettingsModal({ open, onClose, user, onUpdateUser, onLogout }: S
         toast.error("Escribe tu contraseña actual para cambiarla");
         return;
       }
+      if (formData.newPassword.length < 8) {
+        toast.error("La nueva contraseña debe tener al menos 8 caracteres");
+        return;
+      }
     }
 
     setIsLoading(true);
@@ -71,6 +75,9 @@ export function SettingsModal({ open, onClose, user, onUpdateUser, onLogout }: S
           body: JSON.stringify({ actual: formData.currentPassword, nueva: formData.newPassword }),
         });
         if (!res.ok) throw new Error(await leerError(res, "No se pudo cambiar la contraseña"));
+        // Las demás sesiones se cierran; esta continúa con el token nuevo
+        const datos = await res.json().catch(() => null);
+        if (datos?.token) sessionStorage.setItem("token", datos.token);
       }
 
       toast.success("Configuración actualizada");
@@ -128,7 +135,7 @@ export function SettingsModal({ open, onClose, user, onUpdateUser, onLogout }: S
                   <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                   <Input
                     type="password"
-                    placeholder="Nueva contraseña (mínimo 6 caracteres)"
+                    placeholder="Nueva contraseña (mínimo 8 caracteres)"
                     autoComplete="new-password"
                     value={formData.newPassword}
                     onChange={e => setFormData({ ...formData, newPassword: e.target.value })}

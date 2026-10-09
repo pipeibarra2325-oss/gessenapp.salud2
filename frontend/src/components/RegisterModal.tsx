@@ -6,8 +6,10 @@ import { Label } from './ui/label';
 import { User, Mail, Lock, Phone, UserPlus, Ruler, Weight, Calendar, AlertCircle, MapPin, Users } from 'lucide-react';
 import { Checkbox } from './ui/checkbox';
 import { toast } from "sonner";
-import { obtenerDepartamentos } from "../services/api";
+import { obtenerDepartamentos, obtenerRegiones } from "../services/api";
 import { crearUsuario } from "../services/api";
+import { apiUrl } from "../utils/auth";
+import { LegalModal, type DocumentoLegal } from './LegalModal';
 
 interface RegisterModalProps {
   open: boolean;
@@ -30,11 +32,15 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
     weight: '',
     birthDate: '',
     departmentId: '',
+    regionId: '',
     acceptedTerms: false
   });
+  const [regiones, setRegiones] = useState<{ id_region: number; nombre_region: string }[]>([]);
   const [departments, setDepartments] = useState<{ id_departamento: number; nombre_departamento: string; region: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [documentoLegal, setDocumentoLegal] = useState<DocumentoLegal | null>(null);
+  const abrirDocumento = (d: DocumentoLegal) => (e: React.MouseEvent) => { e.preventDefault(); e.stopPropagation(); setDocumentoLegal(d); };
 
   // Función para reiniciar el formulario
   const resetForm = () => {
@@ -51,6 +57,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
       weight: '',
       birthDate: '',
       departmentId: '',
+      regionId: '',
       acceptedTerms: false
     });
     setErrors({});
@@ -65,11 +72,12 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
         const data = await obtenerDepartamentos();
         setDepartments(data);
 
-        // Valor por defecto (igual que antes con "Nariño")
-        if (data.length > 0 && !formData.departmentId) {
+        // Valor por defecto: Nariño, departamento al que se dirige la aplicación
+        const narino = data.find((d: any) => String(d.nombre_departamento).toLowerCase().startsWith('nari'));
+        if (narino && !formData.departmentId) {
           setFormData(prev => ({
             ...prev,
-            departmentId: data[0].id_departamento.toString()
+            departmentId: narino.id_departamento.toString()
           }));
         }
       } catch (error) {
@@ -79,6 +87,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
     };
 
     fetchDepartments();
+    obtenerRegiones().then(setRegiones).catch(() => setRegiones([]));
   }, [open]);
 
   const handleChange = (field: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -157,6 +166,11 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
       newErrors.birthDate = 'Fecha requerida';
     }
 
+    if (!formData.departmentId) {
+      newErrors.departmentId = 'Selecciona tu departamento';
+      toast.error('Selecciona tu departamento');
+    }
+
     if (!formData.acceptedTerms) {
       newErrors.acceptedTerms = 'Debes aceptar los términos';
     }
@@ -192,27 +206,29 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
         estatura: formData.height,
         peso: formData.weight,
         fecha_nacimiento: formData.birthDate,
-        id_departamento: formData.departmentId ? Number(formData.departmentId) : null
+        id_departamento: formData.departmentId ? Number(formData.departmentId) : null,
+        id_region: formData.regionId ? Number(formData.regionId) : null
       };
 
-      const respuesta = await crearUsuario(userData);
+      await crearUsuario(userData);
 
       toast.success("Usuario registrado correctamente");
 
-      //Iniciar sesión automáticamente después del registro
-      if (onRegisterSuccess) {
-        onRegisterSuccess({
-          name: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          genero: formData.genero,
-          department: departments.find(d => d.id_departamento === Number(formData.departmentId))?.nombre_departamento,
-          region: departments.find(d => d.id_departamento === Number(formData.departmentId))?.region,
-          height: formData.height,
-          weight: formData.weight,
-          birthDate: formData.birthDate
-        });
+      // Iniciar sesión automáticamente después del registro: se obtiene el token y el usuario
+      // completo (con su id), igual que en el formulario de inicio de sesión. Sin el token, la
+      // persona parecía conectada pero no podía registrar consumos, favoritos ni ver «Para ti (IA)».
+      const login = await fetch(apiUrl('/login'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: formData.email, password: formData.password })
+      });
+      const datos = await login.json().catch(() => ({}));
+      if (login.ok && datos.token) {
+        sessionStorage.setItem("token", datos.token);
+        onRegisterSuccess?.(datos.user || datos);
+      } else {
+        toast.info("Tu cuenta fue creada. Inicia sesión para continuar.");
+        onSwitchToLogin?.();
       }
 
       onClose();
@@ -247,6 +263,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
   };
 
   return (
+    <>
     <Dialog open={open} onOpenChange={(val: boolean) => {
       if (!val) {
         onClose();
@@ -489,6 +506,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
                   className="flex h-10 w-full rounded-md border border-input bg-background px-10 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 text-foreground"
                   required
                 >
+                  {departments.length > 0 && <option value="" disabled>Selecciona tu departamento</option>}
                   {departments.length > 0 ? (
                     departments.map(dept => (
                       <option key={dept.id_departamento} value={dept.id_departamento}
@@ -503,17 +521,36 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
               </div>
             </div>
 
+            <div className="space-y-2">
+              <Label htmlFor="region">Región alimentaria</Label>
+              <select
+                id="region"
+                value={formData.regionId}
+                onChange={(e) => setFormData(prev => ({ ...prev, regionId: e.target.value }))}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+              >
+                <option value="">
+                  Según mi departamento{(() => { const r = departments.find(d => d.id_departamento === Number(formData.departmentId))?.region; return r ? ` (${r})` : ''; })()}
+                </option>
+                {regiones.map(r => <option key={r.id_region} value={r.id_region}>{r.nombre_region}</option>)}
+              </select>
+              <p className="text-xs text-muted-foreground">
+                En departamentos con varias zonas, como Nariño (Pasto es andino y Tumaco es pacífico), elige la tuya.
+              </p>
+            </div>
+
             <div className="space-y-4 bg-gray-50 p-4 rounded-xl border border-gray-100">
               <div className="flex items-start space-x-3">
                 <Checkbox
                   id="terms"
+                  aria-label="Acepto la Política de Privacidad y los Términos y Condiciones de GessenApp"
                   checked={formData.acceptedTerms}
                   onCheckedChange={(checked: boolean) => setFormData(prev => ({ ...prev, acceptedTerms: !!checked }))
                   }
                   className="mt-1"
                 />
                 <Label htmlFor="terms" className={`text-xs leading-normal cursor-pointer ${errors.acceptedTerms ? 'text-red-500' : 'text-gray-600'}`}>
-                  Acepto la <span className="text-green-600 font-bold underline">Política de Privacidad</span> y los <span className="text-green-600 font-bold underline">Términos y Condiciones</span> de GessenApp.
+                  Acepto la <button type="button" onClick={abrirDocumento('privacidad')} className="text-green-600 font-bold underline">Política de Privacidad</button> y los <button type="button" onClick={abrirDocumento('terminos')} className="text-green-600 font-bold underline">Términos y Condiciones</button> de GessenApp.
                 </Label>
               </div>
               {errors.acceptedTerms && <p className="text-[10px] text-red-500 flex items-center gap-1"><AlertCircle className="w-3 h-3" /> {errors.acceptedTerms}</p>}
@@ -540,5 +577,7 @@ export function RegisterModal({ open, onClose, onSwitchToLogin, onRegisterSucces
         )}
       </DialogContent>
     </Dialog>
+    <LegalModal documento={documentoLegal} onClose={() => setDocumentoLegal(null)} />
+    </>
   );
 }

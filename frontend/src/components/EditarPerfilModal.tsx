@@ -18,7 +18,8 @@ const aFecha = (valor: any) => (valor ? String(valor).slice(0, 10) : '');
 
 // Formulario para que el usuario actualice sus datos personales y biométricos
 export function EditarPerfilModal({ open, onClose, user, onUpdateUser }: EditarPerfilModalProps) {
-  const [departamentos, setDepartamentos] = useState<{ id_departamento: number; nombre_departamento: string }[]>([]);
+  const [departamentos, setDepartamentos] = useState<{ id_departamento: number; nombre_departamento: string; region?: string }[]>([]);
+  const [regiones, setRegiones] = useState<{ id_region: number; nombre_region: string }[]>([]);
   const [form, setForm] = useState<any>({});
   const [guardando, setGuardando] = useState(false);
 
@@ -27,6 +28,10 @@ export function EditarPerfilModal({ open, onClose, user, onUpdateUser }: EditarP
       .then(r => (r.ok ? r.json() : []))
       .then(setDepartamentos)
       .catch(() => setDepartamentos([]));
+    fetch(apiUrl('/regiones'))
+      .then(r => (r.ok ? r.json() : []))
+      .then(setRegiones)
+      .catch(() => setRegiones([]));
   }, []);
 
   useEffect(() => {
@@ -40,6 +45,7 @@ export function EditarPerfilModal({ open, onClose, user, onUpdateUser }: EditarP
       estatura: user.height ?? user.estatura ?? '',
       peso: user.weight ?? user.peso ?? '',
       id_departamento: user.id_departamento ?? '',
+      id_region: user.id_region ?? '',
     });
   }, [open, user]);
 
@@ -50,6 +56,8 @@ export function EditarPerfilModal({ open, onClose, user, onUpdateUser }: EditarP
       if (d) setForm((f: any) => ({ ...f, id_departamento: d.id_departamento }));
     }
   }, [open, departamentos, user?.department, form.id_departamento]);
+
+  const regionDepartamento = departamentos.find(d => String(d.id_departamento) === String(form.id_departamento))?.region;
 
   const cambiar = (campo: string) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm({ ...form, [campo]: e.target.value });
@@ -70,6 +78,7 @@ export function EditarPerfilModal({ open, onClose, user, onUpdateUser }: EditarP
           estatura: form.estatura === '' ? null : Number(form.estatura),
           peso: form.peso === '' ? null : Number(form.peso),
           id_departamento: form.id_departamento === '' ? null : Number(form.id_departamento),
+          id_region: form.id_region === '' || form.id_region == null ? null : Number(form.id_region),
         }),
       });
       const data = await res.json().catch(() => ({}));
@@ -130,6 +139,16 @@ export function EditarPerfilModal({ open, onClose, user, onUpdateUser }: EditarP
                 <option value="">Sin especificar</option>
                 {departamentos.map(d => <option key={d.id_departamento} value={d.id_departamento}>{d.nombre_departamento}</option>)}
               </select>
+            </div>
+            <div className="space-y-1 col-span-2">
+              <Label htmlFor="ep-region">Región alimentaria</Label>
+              <select id="ep-region" value={form.id_region ?? ''} onChange={cambiar('id_region')} className="w-full h-9 border rounded-xl px-3 text-sm">
+                <option value="">Según mi departamento{regionDepartamento ? ` (${regionDepartamento})` : ''}</option>
+                {regiones.map(r => <option key={r.id_region} value={r.id_region}>{r.nombre_region}</option>)}
+              </select>
+              <p className="text-[11px] text-muted-foreground">
+                Se usa para priorizar ingredientes de tu zona. En departamentos con varias zonas, como Nariño (Pasto es andino y Tumaco es pacífico), elige la tuya.
+              </p>
             </div>
             <div className="space-y-1">
               <Label htmlFor="ep-estatura">Estatura (cm)</Label>

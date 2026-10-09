@@ -8,8 +8,12 @@ const pool = new Pool({
   user: process.env.DB_USER || "postgres",
   host: process.env.DB_HOST || "localhost",
   database: process.env.DB_NAME || "BD_gessenapp",
-  password: process.env.DB_PASSWORD || "2003",
+  // La contraseña solo se lee de backend/.env: nunca se escribe en el código
+  password: process.env.DB_PASSWORD,
   port: Number(process.env.DB_PORT) || 5433,
+  max: 20,
+  // Si no hay conexiones libres en 10 s, la consulta falla con un error en lugar de dejar el servidor esperando
+  connectionTimeoutMillis: 10000,
 });
 
 export default pool;

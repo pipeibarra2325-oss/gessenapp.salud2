@@ -28,9 +28,10 @@ function CardHeader({ className, ...props }: React.ComponentProps<"div">) {
   );
 }
 
-function CardTitle({ className, ...props }: React.ComponentProps<"div">) {
+// «as» permite usar el nivel de título que corresponda en la página (orden de encabezados accesible)
+function CardTitle({ className, as: Etiqueta = "h4", ...props }: React.ComponentProps<"div"> & { as?: "h2" | "h3" | "h4" }) {
   return (
-    <h4
+    <Etiqueta
       data-slot="card-title"
       className={cn("leading-none", className)}
       {...props}

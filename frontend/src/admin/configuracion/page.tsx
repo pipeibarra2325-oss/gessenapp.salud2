@@ -48,6 +48,10 @@ export default function ConfiguracionPage() {
       toast.error("Las contraseñas no coinciden");
       return;
     }
+    if (form.password && form.password.length < 8) {
+      toast.error("La contraseña debe tener al menos 8 caracteres");
+      return;
+    }
 
     setLoading(true);
 
@@ -64,8 +68,13 @@ export default function ConfiguracionPage() {
         return;
       }
 
+      const datos = await res.json().catch(() => null);
+      // Si cambió la contraseña, el servidor entrega un token nuevo para esta sesión
+      if (datos?.token) sessionStorage.setItem("token", datos.token);
       toast.success("✅ Configuración guardada correctamente");
-      
+      // El menú del panel muestra el nombre de la aplicación: se le avisa que cambió
+      window.dispatchEvent(new Event("gessen-config"));
+
       // Limpiar contraseñas después de guardar
       setForm(prev => ({
         ...prev,
@@ -104,9 +113,11 @@ export default function ConfiguracionPage() {
             <div>
               <label className="text-sm font-medium block mb-2">
                 Nombre de la Aplicación
+                <span className="block text-xs font-normal text-muted-foreground">Se muestra en el menú del panel de administración</span>
               </label>
               <input
                 value={form.appName}
+                maxLength={40}
                 onChange={(e) => setForm({ ...form, appName: e.target.value })}
                 className="w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-primary"
               />
@@ -114,8 +125,9 @@ export default function ConfiguracionPage() {
 
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="text-sm font-medium block mb-2">Idioma</label>
+                <label className="text-sm font-medium block mb-2">Idioma <span className="text-xs font-normal text-muted-foreground">(fijo en esta versión)</span></label>
                 <select
+                  disabled
                   value={form.idioma}
                   onChange={(e) => setForm({ ...form, idioma: e.target.value })}
                   className="w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-primary"
@@ -125,8 +137,9 @@ export default function ConfiguracionPage() {
               </div>
 
               <div>
-                <label className="text-sm font-medium block mb-2">Zona Horaria</label>
+                <label className="text-sm font-medium block mb-2">Zona Horaria <span className="text-xs font-normal text-muted-foreground">(fija en esta versión)</span></label>
                 <select
+                  disabled
                   value={form.zona}
                   onChange={(e) => setForm({ ...form, zona: e.target.value })}
                   className="w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-primary"
@@ -149,7 +162,7 @@ export default function ConfiguracionPage() {
           <CardContent className="space-y-4">
             <input
               type="password"
-              placeholder="Nueva contraseña del administrador"
+              placeholder="Nueva contraseña del administrador (mínimo 8 caracteres)"
               value={form.password}
               onChange={(e) => setForm({ ...form, password: e.target.value })}
               className="w-full px-4 py-3 rounded-2xl border focus:outline-none focus:ring-2 focus:ring-primary"
@@ -170,26 +183,21 @@ export default function ConfiguracionPage() {
             <CardTitle className="flex items-center gap-2">
               <Bell className="w-5 h-5" />
               Notificaciones
+              <span className="ml-1 px-2 py-0.5 rounded-full bg-purple-100 text-purple-700 text-[10px] font-bold uppercase tracking-wide">Próximamente</span>
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex justify-between items-center">
+            <p className="text-sm text-muted-foreground">
+              Los avisos por correo de nuevos usuarios y nuevas recetas estarán disponibles en una próxima versión.
+              Mientras tanto, esa actividad se consulta en el Dashboard y en el registro de eventos.
+            </p>
+            <div className="flex justify-between items-center opacity-50">
               <span>Nuevos usuarios</span>
-              <input
-                type="checkbox"
-                checked={form.notiUsuarios}
-                onChange={(e) => setForm({ ...form, notiUsuarios: e.target.checked })}
-                className="w-5 h-5 accent-primary"
-              />
+              <input type="checkbox" disabled checked={form.notiUsuarios} readOnly className="w-5 h-5 accent-primary" />
             </div>
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center opacity-50">
               <span>Nuevas recetas</span>
-              <input
-                type="checkbox"
-                checked={form.notiRecetas}
-                onChange={(e) => setForm({ ...form, notiRecetas: e.target.checked })}
-                className="w-5 h-5 accent-primary"
-              />
+              <input type="checkbox" disabled checked={form.notiRecetas} readOnly className="w-5 h-5 accent-primary" />
             </div>
           </CardContent>
         </Card>

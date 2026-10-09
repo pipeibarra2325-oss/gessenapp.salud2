@@ -5,6 +5,7 @@ import autoTable from "jspdf-autotable";
 export interface GraficaPdf {
   titulo: string;
   contenedor: HTMLElement | null; // elemento que contiene el <svg> de Recharts
+  seccion?: "periodo" | "seguimiento"; // las del seguimiento clínico van en su propia sección
 }
 
 const VERDE: [number, number, number] = [5, 150, 105];
@@ -63,8 +64,9 @@ export async function descargarReportePdf(reporte: any, graficas: GraficaPdf[]) 
     }
   };
 
-  const titulo = (texto: string) => {
-    saltoSiHaceFalta(12);
+  // "siguiente" reserva espacio para el contenido que va debajo, para no dejar un título solo al final de la página
+  const titulo = (texto: string, siguiente = 20) => {
+    saltoSiHaceFalta(7 + siguiente);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(12);
     doc.setTextColor(...VERDE);
@@ -109,6 +111,90 @@ export async function descargarReportePdf(reporte: any, graficas: GraficaPdf[]) 
   });
   y = (doc as any).lastAutoTable.finalY + 6;
 
+  // ---------- Seguimiento clínico ----------
+  const sg = reporte.seguimiento;
+  const hayRegistros = sg && (sg.registros?.length > 0 || sg.peso?.length > 1);
+  if (hayRegistros) {
+    titulo("Seguimiento clínico", 30);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9.5);
+    if (!sg.alertas.length) {
+      doc.text("Los últimos valores registrados están dentro de las metas de referencia.", M, y);
+      y += 6;
+    }
+    for (const a of sg.alertas) {
+      const lineas = doc.splitTextToSize(a.mensaje, ANCHO - 5);
+      saltoSiHaceFalta(lineas.length * 4.6 + 1.5);
+      doc.setFillColor(...(a.nivel === "alta" ? ([220, 38, 38] as [number, number, number]) : ([217, 119, 6] as [number, number, number])));
+      doc.circle(M + 1.2, y - 1.2, 0.9, "F");
+      doc.text(lineas, M + 4, y);
+      y += lineas.length * 4.6 + 1.5;
+    }
+    y += 1;
+    const sexo = sg.paciente?.sexo;
+    const metas: [string, string, string][] = [
+      ["glucemia_ayunas", "Glucemia en ayunas (mg/dL)", "80 a 130"],
+      ["glucemia_postprandial", "Glucemia posprandial (mg/dL)", "Menos de 180"],
+      ["hba1c", "HbA1c (%)", "Menos de 7"],
+      ["colesterol_total", "Colesterol total (mg/dL)", "Menos de 200"],
+      ["ldl", "Colesterol LDL (mg/dL)", "Menos de 100 (menos de 70 si hay alto riesgo)"],
+      ["hdl", "Colesterol HDL (mg/dL)", sexo === "F" ? "50 o más" : "40 o más"],
+      ["trigliceridos", "Triglicéridos (mg/dL)", "Menos de 150"],
+      ["creatinina", "Creatinina (mg/dL)", sg.tfg != null ? `TFG estimada: ${sg.tfg} mL/min/1,73 m² (meta: 60 o más)` : "TFG estimada de 60 o más"],
+      ["circunferencia_pantorrilla", "Circunferencia de pantorrilla (cm)", "31 o más"],
+      ["fuerza_prension", "Fuerza de prensión (kg)", sexo === "F" ? "16 o más" : "27 o más"],
+      ["sarc_f", "SARC-F (puntos)", "Menos de 4"],
+    ];
+    const filas = metas.filter(([c]) => sg.ultimos?.[c] != null)
+      .map(([c, n, meta]) => [n, fmt(sg.ultimos[c], c === "creatinina" ? 2 : 1), fechaLarga(sg.fechaUltimo[c]), meta]);
+    if (filas.length) {
+      autoTable(doc, {
+        startY: y,
+        margin: { left: M, right: M },
+        headStyles: { fillColor: VERDE },
+        styles: { fontSize: 9 },
+        head: [["Indicador", "Último valor", "Fecha", "Meta de referencia"]],
+        body: filas,
+        columnStyles: { 0: { cellWidth: 52 }, 1: { cellWidth: 20 }, 2: { cellWidth: 36 } },
+      });
+      y = (doc as any).lastAutoTable.finalY + 4;
+    }
+    if (sg.peso?.length > 1) {
+      const pri = sg.peso[0], ult = sg.peso[sg.peso.length - 1];
+      const dif = Math.round((ult.peso - pri.peso) * 10) / 10;
+      doc.setFontSize(9.5);
+      const texto = `Peso: ${fmt(pri.peso)} kg (${fechaLarga(pri.fecha)}) a ${fmt(ult.peso)} kg (${fechaLarga(ult.fecha)}), ${dif > 0 ? "aumento" : dif < 0 ? "reducción" : "sin cambio"}${dif ? ` de ${fmt(Math.abs(dif))} kg` : ""}${ult.imc != null ? `; IMC actual ${fmt(ult.imc)} kg/m²` : ""}.`;
+      const lineas = doc.splitTextToSize(texto, ANCHO);
+      saltoSiHaceFalta(lineas.length * 4.6 + 2);
+      doc.text(lineas, M, y + 2);
+      y += lineas.length * 4.6 + 3;
+    }
+    for (const g of graficas.filter((x) => x.seccion === "seguimiento" && x.contenedor)) {
+      try {
+        const png = await svgAPng(g.contenedor as HTMLElement);
+        if (!png) continue;
+        const ancho = ANCHO * 0.55, alto = (ancho * png.alto) / png.ancho;
+        saltoSiHaceFalta(alto + 8);
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(9);
+        doc.setTextColor(...GRIS);
+        doc.text(g.titulo, M, y + 2);
+        doc.setTextColor(0, 0, 0);
+        doc.addImage(png.data, "JPEG", M, y + 4, ancho, alto);
+        y += alto + 8;
+      } catch (e) {
+        console.warn(e);
+      }
+    }
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(8);
+    doc.setTextColor(...GRIS);
+    saltoSiHaceFalta(8);
+    doc.text(doc.splitTextToSize("Metas generales de referencia: ADA Standards of Care 2025 (control glucémico y lípidos), EWGSOP2 (sarcopenia) y CKD-EPI 2021 (función renal). Deben individualizarse según el paciente.", ANCHO), M, y + 1);
+    doc.setTextColor(0, 0, 0);
+    y += 10;
+  }
+
   // ---------- Resumen para el médico ----------
   titulo("Resumen de la alimentación para el médico");
   doc.setFont("helvetica", "normal");
@@ -149,7 +235,7 @@ export async function descargarReportePdf(reporte: any, graficas: GraficaPdf[]) 
   // ---------- Gráficas ----------
   const imagenes = [];
   for (const g of graficas) {
-    if (!g.contenedor) continue;
+    if (!g.contenedor || g.seccion === "seguimiento") continue;
     try {
       const png = await svgAPng(g.contenedor);
       if (png) imagenes.push({ ...png, titulo: g.titulo });
@@ -158,8 +244,9 @@ export async function descargarReportePdf(reporte: any, graficas: GraficaPdf[]) 
     }
   }
   if (imagenes.length) {
-    titulo("Gráficas del periodo");
     const anchoCelda = (ANCHO - 6) / 2;
+    const primeraFila = Math.max(...imagenes.slice(0, 2).map((im) => (anchoCelda * im.alto) / im.ancho)) + 7;
+    titulo("Gráficas del periodo", primeraFila);
     for (let i = 0; i < imagenes.length; i += 2) {
       const fila = imagenes.slice(i, i + 2);
       const altos = fila.map((im) => (anchoCelda * im.alto) / im.ancho);
@@ -224,6 +311,6 @@ export async function descargarReportePdf(reporte: any, graficas: GraficaPdf[]) 
     doc.text(`Página ${i} de ${paginas}`, M + ANCHO, ALTO_PAG - 8, { align: "right" });
   }
 
-  const nombreArchivo = `Informe_nutricional_${u.nombre.replace(/\s+/g, "_")}_${new Date().toISOString().slice(0, 10)}.pdf`;
+  const nombreArchivo = `Informe_nutricional_${u.nombre.replace(/\s+/g, "_")}_${new Date().toLocaleDateString("en-CA")}.pdf`;
   doc.save(nombreArchivo);
 }

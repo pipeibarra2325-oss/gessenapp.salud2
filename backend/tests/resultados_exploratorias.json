@@ -1,0 +1,325 @@
+{
+  "fecha": "2026-10-09T12:56:07.107Z",
+  "aprobados": 53,
+  "total": 53,
+  "resultados": [
+    {
+      "caso": "Registro con correo inválido",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Registro con contraseña de 3 caracteres",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Registro sin nombre",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Registro con fecha de nacimiento futura",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Registro con departamento inexistente",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Registro con JSON mal formado",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Registro con nombre de 5000 caracteres",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Registro con correo en mayúsculas duplicado",
+      "esperado": "409",
+      "obtenido": 409,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Login con inyección SQL",
+      "esperado": "400/401",
+      "obtenido": 401,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Login sin cuerpo",
+      "esperado": "400/401",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Token mal formado",
+      "esperado": "401/403",
+      "obtenido": 401,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Consumo con porción 0",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Consumo con porción negativa",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Consumo con porción 500",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Consumo con calificación 9",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Consumo con platillo texto",
+      "esperado": "400/404",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Consumo con comentario de 20000 caracteres",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Eliminar consumo con id texto",
+      "esperado": "400/404",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Eliminar consumo inexistente",
+      "esperado": "404",
+      "obtenido": 404,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Consultar consumos con fecha inválida",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Favoritos de otro usuario",
+      "esperado": "403/404",
+      "obtenido": 403,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Favorito con platillo inexistente",
+      "esperado": "400/404",
+      "obtenido": 404,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Favorito a nombre de otro usuario",
+      "esperado": "403/200",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Recomendaciones IA con límite -5",
+      "esperado": "200/400",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Recomendaciones IA con límite 100000",
+      "esperado": "200/400",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Perfil con peso texto",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Perfil con estatura 0",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Cambiar a rol administrador desde el perfil",
+      "esperado": "200",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Paciente usa ruta de admin (dashboard)",
+      "esperado": "403",
+      "obtenido": 403,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Paciente crea administrador",
+      "esperado": "403",
+      "obtenido": 403,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Reporte con desde > hasta",
+      "esperado": "200/400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Reporte de usuario inexistente",
+      "esperado": "404",
+      "obtenido": 404,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Reporte con id texto",
+      "esperado": "400/404",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Historial de usuario con id texto",
+      "esperado": "400/404",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Editar platillo inexistente",
+      "esperado": "404/400",
+      "obtenido": 404,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Crear platillo sin nombre",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Ingredientes con lista vacía",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Ingredientes con id texto",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Subir imagen que no es imagen",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Editar usuario inexistente",
+      "esperado": "404/400",
+      "obtenido": 404,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Eliminar usuario con id texto",
+      "esperado": "400/404",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Logs con límite enorme",
+      "esperado": "200/400",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Logs con acción inyectada",
+      "esperado": "200",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Administrador con correo inválido",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Administrador con contraseña corta",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Admin edita nombre de 300 caracteres",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Admin restablece contraseña corta",
+      "esperado": "400",
+      "obtenido": 400,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Admin restablece la contraseña del paciente",
+      "esperado": "200",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Paciente entra con la contraseña restablecida",
+      "esperado": "200",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "La contraseña anterior ya no sirve",
+      "esperado": "401",
+      "obtenido": 401,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Sexto intento fallido seguido queda bloqueado",
+      "esperado": "429",
+      "obtenido": 429,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Bloqueado aunque la contraseña sea correcta",
+      "esperado": "429",
+      "obtenido": 429,
+      "estado": "Aprobado"
+    },
+    {
+      "caso": "Otro correo no se bloquea",
+      "esperado": "200",
+      "obtenido": 200,
+      "estado": "Aprobado"
+    }
+  ]
+}

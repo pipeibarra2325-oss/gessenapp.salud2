@@ -170,7 +170,7 @@ const REGIONAL_INGREDIENTS: Record<string, string[]> = {
   'Pacífico': ['pescado', 'trucha', 'plátano', 'coco', 'mariscos'],
   // Nombre con el que la base de datos registra la región de Nariño
   'Pacífica': ['pescado', 'trucha', 'plátano', 'coco', 'mariscos'],
-  'Andina': ['papa criolla', 'quinoa', 'trucha', 'habas', 'maíz'],
+  'Andina': ['papa', 'quinoa', 'trucha', 'habas', 'maíz', 'lentejas'],
   'Caribe': ['pescado', 'yuca', 'plátano', 'coco'],
   'Orinoquía': ['carne', 'yuca', 'plátano', 'pescado'],
   'Amazonía': ['pescado', 'yuca', 'plátano'],
@@ -179,6 +179,10 @@ const REGIONAL_INGREDIENTS: Record<string, string[]> = {
 
 export function DailyRecommendationsTab({ user, recipes, onRecipeClick }: DailyRecommendationsTabProps) {
   const region = useMemo(() => user?.region || 'Andina', [user?.region]);
+  // Índice glucémico bajo; el medio solo si el profesional lo autorizó (siempre después de los de IG bajo)
+  const permiteMedio = Boolean(user?.permiteIgMedio);
+  const apto = (r: Recipe) => r.glycemicIndex === 'bajo' || (permiteMedio && r.glycemicIndex === 'medio');
+  const primeroBajo = (a: Recipe, b: Recipe) => (a.glycemicIndex === 'bajo' ? 0 : 1) - (b.glycemicIndex === 'bajo' ? 0 : 1);
   
   // Determinar tipo de comida según hora del día
   const mealTimeOfDay = useMemo(() => {
@@ -194,8 +198,8 @@ export function DailyRecommendationsTab({ user, recipes, onRecipeClick }: DailyR
     const regionalIngredients = REGIONAL_INGREDIENTS[region] || [];
     
     return recipes.filter(recipe => {
-      // Filtro básico: índice glucémico bajo (apto para diabetes tipo 2)
-      if (recipe.glycemicIndex !== 'bajo') return false;
+      // Filtro básico: índice glucémico bajo (o medio autorizado por el profesional)
+      if (!apto(recipe)) return false;
       
       // Verificar si contiene ingredientes de la región
       const hasRegionalIngredient = recipe.ingredients.some(ingredient =>
@@ -205,8 +209,8 @@ export function DailyRecommendationsTab({ user, recipes, onRecipeClick }: DailyR
       );
       
       return hasRegionalIngredient;
-    });
-  }, [recipes, region]);
+    }).sort(primeroBajo);
+  }, [recipes, region, permiteMedio]);
 
   // Receta principal recomendada según hora del día
   const mainRecommendation = useMemo(() => {
@@ -214,12 +218,12 @@ export function DailyRecommendationsTab({ user, recipes, onRecipeClick }: DailyR
     // Si no hay recetas de esa categoría en la región, buscar cualquier receta de esa categoría
     if (filtered.length === 0) {
       const fallback = recipes.filter(r => 
-        r.category === mealTimeOfDay && r.glycemicIndex === 'bajo'
-      );
+        r.category === mealTimeOfDay && apto(r)
+      ).sort(primeroBajo);
       return fallback[0] || recipes.find(r => r.glycemicIndex === 'bajo');
     }
     return filtered[0];
-  }, [regionalRecipes, mealTimeOfDay, recipes]);
+  }, [regionalRecipes, mealTimeOfDay, recipes, permiteMedio]);
 
   // Receta alternativa más ligera
   const alternativeRecommendation = useMemo(() => {
@@ -234,14 +238,14 @@ export function DailyRecommendationsTab({ user, recipes, onRecipeClick }: DailyR
       const fallback = recipes.filter(r => 
         (Array.isArray(r.preference) ? r.preference.includes('Ligero') : r.preference === 'Ligero') && 
         r.category === mealTimeOfDay &&
-        r.glycemicIndex === 'bajo' &&
+        apto(r) &&
         r.id !== mainRecommendation?.id
-      );
+      ).sort(primeroBajo);
       return fallback[0];
     }
     
     return lightRecipes[0];
-  }, [regionalRecipes, mealTimeOfDay, mainRecommendation, recipes]);
+  }, [regionalRecipes, mealTimeOfDay, mainRecommendation, recipes, permiteMedio]);
 
   // Consejo del día (rotación automática por día del año)
   const dailyTip = useMemo(() => {

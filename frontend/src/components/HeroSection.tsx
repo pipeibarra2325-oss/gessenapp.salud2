@@ -1,4 +1,7 @@
-import { ImageWithFallback } from './figma/ImageWithFallback';
+import { ImageWithFallback, imagenOptimizada } from './figma/ImageWithFallback';
+
+// Foto de la portada: el navegador elige el tamaño según la pantalla (celular o computador)
+const FOTO_PORTADA = 'https://images.unsplash.com/photo-1723985021773-d1f4c4ebfdd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwZGlhYmV0aWMlMjBmb29kJTIwc2FsYWR8ZW58MXx8fHwxNzU4NzE4ODc5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
 import { Button } from './ui/button';
 import { ArrowRight, Utensils, Heart, Sparkles, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -51,7 +54,7 @@ export function HeroSection({ isLoggedIn, user, region }: HeroSectionProps) {
             )}
             
             <div className="bg-white/80 backdrop-blur-sm p-6 rounded-2xl border border-green-100">
-              <h3 className="text-green-700 mb-3">¿Por qué elegir nuestras recetas?</h3>
+              <h2 className="text-green-700 mb-3 text-lg font-medium">¿Por qué elegir nuestras recetas?</h2>
               <ul className="space-y-2 text-gray-700">
                 <li className="flex items-center">
                   <span className="w-2 h-2 bg-green-500 rounded-full mr-3"></span>
@@ -73,7 +76,7 @@ export function HeroSection({ isLoggedIn, user, region }: HeroSectionProps) {
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4">
-              <Button size="lg" className="bg-green-600 hover:bg-green-700" onClick={() => document.getElementById('recetas')?.scrollIntoView({behavior: 'smooth'})}>
+              <Button size="lg" className="bg-green-700 hover:bg-green-800" onClick={() => document.getElementById('recetas')?.scrollIntoView({behavior: 'smooth'})}>
                 <Utensils className="mr-2 h-5 w-5" />
                 Ver Recetas
                 <ArrowRight className="ml-2 h-5 w-5" />
@@ -87,8 +90,14 @@ export function HeroSection({ isLoggedIn, user, region }: HeroSectionProps) {
           <div className="relative">
             <div className="rounded-3xl overflow-hidden shadow-2xl">
               <ImageWithFallback 
-                src="https://images.unsplash.com/photo-1723985021773-d1f4c4ebfdd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwZGlhYmV0aWMlMjBmb29kJTIwc2FsYWR8ZW58MXx8fHwxNzU4NzE4ODc5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral"
+                src={imagenOptimizada(FOTO_PORTADA, 960)}
+                srcSet={[480, 720, 960].map((w) => `${imagenOptimizada(FOTO_PORTADA, w)} ${w}w`).join(', ')}
+                sizes="(min-width: 1024px) 50vw, 100vw"
                 alt="Comida saludable para diabéticos"
+                width={900}
+                height={600}
+                loading="eager"
+                fetchPriority="high"
                 className="w-full h-96 lg:h-[500px] object-cover"
               />
             </div>

@@ -10,7 +10,9 @@ export const NUTRIENTES_PLATILLO_SQL = `
     COALESCE(ROUND(SUM(CASE WHEN n.nombre = 'Grasas'        THEN v.cantidad_por_100g * pi.cantidad / 100.0 END), 1), 0) AS grasas,
     COALESCE(ROUND(SUM(CASE WHEN n.nombre = 'Proteínas'     THEN v.cantidad_por_100g * pi.cantidad / 100.0 END), 1), 0) AS proteinas,
     COALESCE(ROUND(SUM(CASE WHEN n.nombre = 'Fibra'         THEN v.cantidad_por_100g * pi.cantidad / 100.0 END), 1), 0) AS fibra,
-    COALESCE(ROUND(SUM(CASE WHEN n.nombre = 'Sodio'         THEN v.cantidad_por_100g * pi.cantidad / 100.0 END), 1), 0) AS sodio
+    COALESCE(ROUND(SUM(CASE WHEN n.nombre = 'Sodio'         THEN v.cantidad_por_100g * pi.cantidad / 100.0 END), 1), 0) AS sodio,
+    -- Carga glucémica: suma de (índice glucémico x gramos de carbohidratos) / 100 de cada ingrediente
+    COALESCE(ROUND(SUM(CASE WHEN n.nombre = 'Carbohidratos' THEN v.cantidad_por_100g * pi.cantidad / 100.0 * COALESCE(v.indice_glucemico, 0) / 100.0 END), 1), 0) AS carga_glucemica
   FROM platillos_ingredientes pi
   JOIN ingrediente_valores_nutricionales v ON v.id_ingrediente = pi.id_ingrediente
   JOIN nutrientes n ON n.id_nutriente = v.id_nutriente

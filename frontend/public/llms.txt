@@ -1,0 +1,26 @@
+# GessenApp
+
+> Sistema web de apoyo a la recomendación alimentaria para personas con diabetes mellitus tipo 2 en Nariño (Colombia), con un panel para el profesional de la salud. Proyecto de grado del Programa de Ingeniería de Sistemas de la Universidad CESMAG.
+
+Las sugerencias de GessenApp son orientativas y no reemplazan la valoración del médico o del nutricionista.
+
+## Funciones principales
+
+- Catálogo de platillos con aporte nutricional, índice glucémico y carga glucémica calculados con los ingredientes de cada receta.
+- Recomendaciones del día por hora, región alimentaria y nivel glucémico, y sugerencias personalizadas con aprendizaje automático.
+- Registro de consumos con alertas de sodio y azúcares.
+- Seguimiento clínico: glucemia, HbA1c, perfil lipídico, función renal, peso e IMC, tamizaje de sarcopenia y alertas metabólicas.
+- Panel del profesional con el progreso de cada paciente e informe en PDF.
+
+## Páginas
+
+- [Inicio y catálogo de recetas](/): platillos con su aporte nutricional, filtros por sabor, tipo de comida y preferencia, y recomendaciones del día.
+- [Recetas](/#recetas): catálogo completo de platillos de índice glucémico bajo, medio y alto.
+- [Consejos](/#consejos): recomendaciones educativas para el control glucémico.
+- [Sobre la diabetes tipo 2](/#sobre-diabetes): información general, complicaciones y alimentos recomendados.
+- [Catálogo en formato JSON](/api/platillos): lista pública de platillos con nutrientes, nivel glucémico e ingredientes.
+
+## Acceso
+
+- El catálogo de recetas es público; las demás funciones requieren iniciar sesión.
+- El panel de administración (/admin) y la API (/api) no están destinados a indexación.

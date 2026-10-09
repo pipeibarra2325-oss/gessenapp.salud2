@@ -1,29 +1,13 @@
-import jwt from "jsonwebtoken";
+import { usuarioDeSesion } from "./sesion.js";
 
-export const auth = (req, res, next) => {
+export const auth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization || req.headers["authorization"];
-
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({
-        success: false,
-        error: "No autorizado - Token requerido"
-      });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-
-    req.user = decoded;
+    const r = await usuarioDeSesion(req);
+    if (r.error) return res.status(r.status).json({ success: false, error: r.error });
+    req.user = r.usuario;
     next();
-
   } catch (error) {
     console.error("❌ Error en auth:", error.message);
-
-    if (error.name === "TokenExpiredError") {
-      return res.status(401).json({ success: false, error: "Token expirado" });
-    }
-
-    res.status(401).json({ success: false, error: "Token inválido" });
+    res.status(500).json({ success: false, error: "No se pudo verificar la sesión" });
   }
 };

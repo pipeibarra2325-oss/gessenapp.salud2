@@ -70,19 +70,12 @@ export function Footer() {
           {/* Newsletter */}
           <div>
             <h4 className="text-white mb-4">Mantente Informado</h4>
-            <p className="text-gray-400 text-sm mb-4">
-              Recibe nuevas recetas y consejos nutricionales directamente en tu correo.
+            <p className="text-gray-400 text-sm mb-3">
+              Muy pronto podrás recibir nuevas recetas y consejos nutricionales en tu correo.
             </p>
-            <div className="space-y-3">
-              <input
-                type="email"
-                placeholder="Tu correo electrónico"
-                className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white text-sm focus:outline-none focus:border-green-500"
-              />
-              <Button className="w-full bg-green-600 hover:bg-green-700 text-sm">
-                Suscribirse
-              </Button>
-            </div>
+            <p className="text-gray-400 text-sm">
+              Mientras tanto, escríbenos a <a href="mailto:gessenapp@gmail.com" className="text-green-400 underline">gessenapp@gmail.com</a>.
+            </p>
           </div>
         </div>
 
@@ -90,13 +83,13 @@ export function Footer() {
         <div className="border-t border-gray-800 mt-8 pt-8">
           <div className="flex flex-col md:flex-row justify-between items-center">
             <div className="flex space-x-4 mb-4 md:mb-0">
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-green-500">
+              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-green-500" aria-label="Facebook de GessenApp (próximamente)" title="Próximamente">
                 <Facebook className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-green-500">
+              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-green-500" aria-label="Instagram de GessenApp (próximamente)" title="Próximamente">
                 <Instagram className="h-5 w-5" />
               </Button>
-              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-green-500">
+              <Button variant="ghost" size="icon" className="text-gray-400 hover:text-green-500" aria-label="Twitter de GessenApp (próximamente)" title="Próximamente">
                 <Twitter className="h-5 w-5" />
               </Button>
             </div>

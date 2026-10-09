@@ -44,7 +44,7 @@ export function RecipeModal({ recipe, open, onClose, onRegisterConsumption }: Re
   const [isConsumptionModalOpen, setIsConsumptionModalOpen] = useState(false);
   if (!recipe) return null;
 
-  const rating = recipe.rating || 4.5;
+  const rating = recipe.rating || 0;
 
   const macroData = [
     { name: 'Carbohidratos', value: recipe.macroDistribution.carbs, color: '#3b82f6' },
@@ -131,8 +131,12 @@ export function RecipeModal({ recipe, open, onClose, onRegisterConsumption }: Re
                       <p className="text-xl font-black text-yellow-600 leading-none">{recipe.sodium}</p>
                     </div>
                     <div className="bg-white p-4 rounded-xl border border-red-100 shadow-sm transition-hover hover:border-red-300">
-                      <p className="text-red-600 text-[10px] uppercase font-bold tracking-tighter mb-1">Carga Glucémica estimada</p>
+                      <p className="text-red-600 text-[10px] uppercase font-bold tracking-tighter mb-1">Carga glucémica</p>
                       <p className="text-xl font-black text-red-600 leading-none">{recipe.glycemicLoad}</p>
+                      {/* Clasificación usual de la carga glucémica: baja hasta 10, media de 11 a 19, alta desde 20 */}
+                      <p className="text-[10px] text-red-500 mt-1">
+                        {Number(recipe.glycemicLoad) <= 10 ? 'Baja' : Number(recipe.glycemicLoad) < 20 ? 'Media' : 'Alta'}
+                      </p>
                     </div>
                   </div>
 
@@ -201,9 +205,9 @@ export function RecipeModal({ recipe, open, onClose, onRegisterConsumption }: Re
                     </Badge>
                     <div className="flex items-center gap-1 text-yellow-500">
                       {[...Array(5)].map((_, i) => (
-                        <Star key={i} className={`w-4 h-4 ${i < Math.floor(rating) ? 'fill-current' : 'text-gray-200'}`} />
+                        <Star key={i} className={`w-4 h-4 ${i < Math.round(rating) ? 'fill-current' : 'text-gray-200'}`} />
                       ))}
-                      <span className="text-xs text-gray-400 font-bold ml-1">({rating})</span>
+                      <span className="text-xs text-gray-400 font-bold ml-1">{recipe.ratingCount ? `(${rating} · ${recipe.ratingCount} calificaciones)` : 'Sin calificaciones'}</span>
                     </div>
                   </div>
                   <h2 className="text-3xl lg:text-4xl font-black text-gray-900 leading-tight">{recipe.title}</h2>

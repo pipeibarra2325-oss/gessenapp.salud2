@@ -32,7 +32,8 @@ export interface Recipe {
   };
   ingredients: string[];
   instructions: string[];
-  rating?: number;
+  rating?: number | null;
+  ratingCount?: number;
   isFavorite?: boolean;
 }
 
@@ -43,9 +44,10 @@ interface RecipeCardProps {
 }
 
 export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProps) {
-  // Generar estrellas basadas en el rating (o default 4.5)
-  const rating = recipe.rating || 4.5;
-  const fullStars = Math.floor(rating);
+  // Estrellas según el promedio de calificaciones de los usuarios
+  const rating = recipe.rating || 0;
+  const fullStars = Math.round(rating);
+  const sinCalificaciones = !recipe.ratingCount;
 
   return (
     <Card
@@ -55,6 +57,9 @@ export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProp
       <div className="relative overflow-hidden aspect-video">
         <ImageWithFallback
           src={recipe.image}
+          ancho={500}
+          width={500}
+          height={281}
           alt={recipe.title}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
         />
@@ -64,7 +69,7 @@ export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProp
           <Badge
             variant={recipe.glycemicIndex === 'bajo' ? 'default' : recipe.glycemicIndex === 'medio' ? 'secondary' : 'tertiary'
             }
-            className={`${recipe.glycemicIndex === 'bajo' ? 'bg-green-600' : recipe.glycemicIndex === 'medio' ? 'bg-yellow-600' : 'bg-red-600'} text-white shadow-lg border-none px-3 py-1`}
+            className={`${recipe.glycemicIndex === 'bajo' ? 'bg-green-700' : recipe.glycemicIndex === 'medio' ? 'bg-amber-700' : 'bg-red-700'} text-white shadow-lg border-none px-3 py-1`}
           >
             <TrendingDown className="w-3 h-3 mr-1" />
             IG {recipe.glycemicIndex}
@@ -75,6 +80,8 @@ export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProp
           <Button
             variant="secondary"
             size="icon"
+            aria-label={recipe.isFavorite ? `Quitar ${recipe.title} de favoritos` : `Agregar ${recipe.title} a favoritos`}
+            aria-pressed={!!recipe.isFavorite}
             className={`rounded-full h-8 w-8 shadow-md transition-all ${recipe.isFavorite ? 'bg-red-50 text-red-500 hover:bg-red-100' : 'bg-white/90 text-gray-400 hover:text-red-500'}`}
             onClick={(e: React.MouseEvent) => {
               e.stopPropagation();
@@ -105,7 +112,7 @@ export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProp
               className={`w-3 h-3 ${i < fullStars ? 'text-yellow-500 fill-yellow-500' : 'text-gray-300'}`}
             />
           ))}
-          <span className="text-[10px] text-muted-foreground ml-1">({rating})</span>
+          <span className="text-[10px] text-muted-foreground ml-1">{sinCalificaciones ? 'Sin calificaciones' : `(${rating} · ${recipe.ratingCount})`}</span>
         </div>
         <h3 className="text-base font-bold leading-tight line-clamp-2 group-hover:text-green-700 transition-colors">
           {recipe.title}
@@ -130,11 +137,11 @@ export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProp
 
         <div className="grid grid-cols-2 gap-1.5 mt-auto">
           <div className="bg-green-50/50 p-1.5 rounded-md border border-green-100/50">
-            <p className="text-[9px] text-green-600 uppercase font-bold tracking-tighter">Carbos</p>
+            <p className="text-[9px] text-green-800 uppercase font-bold tracking-tighter">Carbos</p>
             <p className="text-[11px] font-semibold text-green-900 leading-none">{recipe.carbs}</p>
           </div>
           <div className="bg-blue-50/50 p-1.5 rounded-md border border-blue-100/50">
-            <p className="text-[9px] text-blue-600 uppercase font-bold tracking-tighter">Prot</p>
+            <p className="text-[9px] text-blue-800 uppercase font-bold tracking-tighter">Prot</p>
             <p className="text-[11px] font-semibold text-blue-900 leading-none">{recipe.protein}</p>
           </div>
         </div>
@@ -143,7 +150,7 @@ export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProp
         <div className="mt-4 pt-3 border-t border-gray-100">
           <div className="flex justify-between text-[10px] mb-1">
             <span>Macros</span>
-            <span className="text-green-600 font-medium">Nivel calorico: {recipe.caloricLevel}</span>
+            <span className="text-green-700 font-medium">Nivel calórico: {recipe.caloricLevel}</span>
           </div>
           <div className="h-2 bg-gray-100 rounded-full overflow-hidden flex [background:linear-gradient(to_right,#3b82f6_0%,#f97316_50%,#eab308_100%)]">
             <div className="h-full bg-blue-500" style={{ width: `${recipe.macroDistribution?.carbs || 0}%` }} />
@@ -151,7 +158,7 @@ export function RecipeCard({ recipe, onClick, onFavoriteToggle }: RecipeCardProp
             <div className="h-full bg-yellow-600" style={{ width: `${recipe.macroDistribution?.fat || 0}%` }} />
           </div>
           {/*mostrar porcentajes debajo */}
-          <div className="flex justify-between text-[9px] text-gray-500 mt-1">
+          <div className="flex justify-between text-[9px] text-gray-600 mt-1">
             <span>C: {recipe.macroDistribution?.carbs}%</span>
             <span>P: {recipe.macroDistribution?.protein}%</span>
             <span>G: {recipe.macroDistribution?.fat}%</span>

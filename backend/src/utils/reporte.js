@@ -1,5 +1,6 @@
 import pool from "../config/database.js";
 import { NUTRIENTES_PLATILLO_SQL } from "./nutricion.js";
+import { construirSeguimiento } from "./seguimiento.js";
 
 // Valores de referencia usados en las observaciones automáticas.
 // Son orientativos y deben ajustarse a la valoración individual del profesional.
@@ -216,5 +217,6 @@ export async function construirReporte(idUsuario, { desde, hasta } = {}) {
     observaciones: obs,
     referencias: REFERENCIAS,
     registros,
+    seguimiento: await construirSeguimiento(idUsuario),
   };
 }

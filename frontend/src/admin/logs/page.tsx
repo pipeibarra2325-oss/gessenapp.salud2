@@ -83,14 +83,16 @@ export default function LogsPage() {
                 <option value="">Todas las acciones</option>
                 {acciones.map((a) => <option key={a} value={a}>{a}</option>)}
               </select>
-              <form onSubmit={(e) => { e.preventDefault(); cargar(1); }} className="relative">
+              <form onSubmit={(e) => { e.preventDefault(); cargar(1); }} className="relative flex gap-2">
                 <Search className="w-4 h-4 absolute left-3 top-2.5 text-muted-foreground" />
                 <input
                   value={buscar}
                   onChange={(e) => setBuscar(e.target.value)}
                   placeholder="Buscar por usuario o detalle"
+                  aria-label="Buscar en el registro de eventos"
                   className="pl-9 pr-3 py-2 border rounded-xl text-sm"
                 />
+                <button type="submit" className="px-3 py-2 border rounded-xl text-sm hover:bg-gray-50">Buscar</button>
               </form>
             </div>
           </div>
@@ -136,11 +138,11 @@ export default function LogsPage() {
           )}
 
           <div className="flex items-center justify-end gap-3 pt-4">
-            <button disabled={pagina <= 1} onClick={() => cargar(pagina - 1)} className="border rounded-xl p-2 disabled:opacity-40">
+            <button disabled={pagina <= 1} onClick={() => cargar(pagina - 1)} aria-label="Página anterior" className="border rounded-xl p-2 disabled:opacity-40">
               <ChevronLeft className="w-4 h-4" />
             </button>
             <span className="text-sm">Página {pagina} de {paginas}</span>
-            <button disabled={pagina >= paginas} onClick={() => cargar(pagina + 1)} className="border rounded-xl p-2 disabled:opacity-40">
+            <button disabled={pagina >= paginas} onClick={() => cargar(pagina + 1)} aria-label="Página siguiente" className="border rounded-xl p-2 disabled:opacity-40">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>

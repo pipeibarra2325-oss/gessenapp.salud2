@@ -6,7 +6,7 @@ import {
   CardTitle,
 } from "../../components/ui/card";
 import { apiUrl } from "../../utils/auth";
-import { Edit, Trash2, UserPlus } from "lucide-react";
+import { Edit, UserMinus, UserPlus } from "lucide-react";
 import { getAuthHeaders, getAuthHeadersWithContent } from "../../utils/auth";
 import { toast } from "sonner";
 
@@ -67,7 +67,7 @@ export default function AdministradoresPage() {
 
   // 🗑️ ELIMINAR ADMIN
   const eliminarAdmin = async (id: number) => {
-    if (!confirm("¿Quitar permisos de administrador?")) return;
+    if (!confirm("¿Quitar el rol de administrador? La cuenta no se elimina: pasará a ser una cuenta de paciente y perderá el acceso al panel.")) return;
 
     try {
       const res = await fetch(
@@ -150,7 +150,7 @@ export default function AdministradoresPage() {
   return (
     <div className="space-y-6">
       {/* HEADER */}
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap gap-4 justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold">Gestión de Administradores</h1>
           <p className="text-muted-foreground">Administra permisos y accesos</p>
@@ -172,7 +172,8 @@ export default function AdministradoresPage() {
         </CardHeader>
 
         <CardContent>
-          <table className="w-full">
+          <div className="overflow-x-auto">
+          <table className="w-full min-w-[640px]">
             <thead>
               <tr className="border-b">
                 <th className="p-4 text-left">Administrador</th>
@@ -198,21 +199,25 @@ export default function AdministradoresPage() {
                     <td className="p-4">
                       {new Date(admin.fecha_registro).toLocaleDateString()}
                     </td>
-                    <td className="p-4 text-right space-x-4">
+                    <td className="p-4 text-right space-x-4 whitespace-nowrap">
                       <button
                         onClick={() => {
                           setAdminEditando(admin);
                           setOpenModal(true);
                         }}
+                        aria-label={`Editar a ${admin.nombre} ${admin.apellido}`}
+                        title="Editar nombre"
                         className="text-blue-600 hover:text-blue-700"
                       >
                         <Edit className="w-4 h-4 inline" />
                       </button>
                       <button
                         onClick={() => eliminarAdmin(admin.id_usuario)}
+                        aria-label={`Quitar el rol de administrador a ${admin.nombre} ${admin.apellido}`}
+                        title="Quitar rol de administrador (la cuenta pasa a ser de paciente)"
                         className="text-red-600 hover:text-red-700"
                       >
-                        <Trash2 className="w-4 h-4 inline" />
+                        <UserMinus className="w-4 h-4 inline" />
                       </button>
                     </td>
                   </tr>
@@ -220,6 +225,7 @@ export default function AdministradoresPage() {
               })}
             </tbody>
           </table>
+          </div>
         </CardContent>
       </Card>
 

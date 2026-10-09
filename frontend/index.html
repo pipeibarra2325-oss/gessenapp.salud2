@@ -1,15 +1,54 @@
-
   <!DOCTYPE html>
-  <html lang="en">
+  <html lang="es">
     <head>
       <meta charset="UTF-8" />
       <meta name="viewport" content="width=device-width, initial-scale=1.0" />
       <title>GessenApp</title>
+      <meta name="description" content="GessenApp: recomendaciones alimentarias, registro de consumos y seguimiento clínico para personas con diabetes tipo 2 en Nariño, con apoyo del profesional de la salud." />
+      <meta name="theme-color" content="#16a34a" />
+      <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+      <!-- Orígenes de las imágenes: la conexión se abre antes de pedirlas -->
+      <link rel="preconnect" href="https://images.unsplash.com" />
+      <link rel="preconnect" href="https://thumb.wikimedia.org" />
+      <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
     </head>
 
     <body>
-      <div id="root"></div>
+      <!-- Portada visible desde el primer momento, mientras se descarga la aplicación.
+           React la reemplaza al iniciar; usa las mismas clases que Header y HeroSection. -->
+      <div id="root"><div id="portada-inicial" class="min-h-screen bg-white">
+        <header class="bg-white shadow-sm border-b sticky top-0 z-40">
+          <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+              <div class="flex items-center space-x-2">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="h-8 w-8 text-green-600" aria-hidden="true"><path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/></svg>
+                <div>
+                  <p class="text-green-700 font-bold">GessenApp</p>
+                  <p class="text-[10px] text-muted-foreground uppercase tracking-wider">Salud y Nutrición</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+        <main>
+          <section class="bg-gradient-to-br from-green-50 to-blue-50 py-16 lg:py-24">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+              <div class="grid lg:grid-cols-2 gap-12 items-center">
+                <div class="space-y-8">
+                  <div>
+                    <h1 class="text-4xl lg:text-6xl text-green-800 mb-4">Recetas Saludables para <span class="text-green-600">Diabéticos</span></h1>
+                    <p class="text-lg text-gray-700 leading-relaxed">Descubre deliciosas recetas especialmente diseñadas para personas con diabetes tipo 2 en Nariño. Alimentación balanceada con productos locales y sabores tradicionales.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+        </main>
+      </div></div>
+      <script>
+        // Con una sesión iniciada la portada es otra (saludo personal): no se muestra la de visitante
+        try { if (sessionStorage.getItem("user")) document.getElementById("portada-inicial").remove(); } catch (e) {}
+      </script>
       <script type="module" src="/src/main.tsx"></script>
     </body>
   </html>
-  

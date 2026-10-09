@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { Sparkles, CheckCircle2, MapPin, Activity, Heart, Scale, Sunrise, Cookie, Moon, Leaf, Utensils } from 'lucide-react';
+import { Sparkles, CheckCircle2, Activity, Heart, Scale, Sunrise, Cookie, Moon, Leaf, Utensils } from 'lucide-react';
 import { Badge } from './ui/badge';
 import { Recipe } from './RecipeCard';
 
@@ -35,7 +35,6 @@ export function SmartSearchTab({ user, recipes, onFilterChange }: SmartSearchTab
     return 'control de peso';
   }, [user]);
 
-  const region = useMemo(() => user?.region || 'Andina', [user?.region]);
 
   // Opciones de búsqueda
   const searchOptions: SearchOption[] = [
@@ -77,7 +76,7 @@ export function SmartSearchTab({ user, recipes, onFilterChange }: SmartSearchTab
       icon: Leaf,
       category: undefined,
       preferences: ['Tradicional'],
-      description: 'Versiones adaptadas de platos típicos de tu región para diabéticos tipo 2.'
+      description: 'Platillos de preparación tradicional en versiones de índice glucémico bajo.'
     }
   ];
 
@@ -141,8 +140,8 @@ export function SmartSearchTab({ user, recipes, onFilterChange }: SmartSearchTab
           <div className="flex-1">
             <h4 className="font-black text-green-900 mb-1">Personalización para Diabetes Tipo 2</h4>
             <p className="text-sm text-green-800 leading-relaxed">
-              Basándonos en tu perfil de salud (edad, peso, altura e IMC), seleccionamos automáticamente recetas con bajo índice glucémico,
-              priorizadas según tu región ({region}) y necesidades nutricionales.
+              Todas las búsquedas muestran solo recetas de índice glucémico bajo. Con tu peso y tu estatura calculamos tu IMC:
+              si indica sobrepeso u obesidad, ordenamos primero las recetas con menos calorías.
             </p>
           </div>
         </div>
@@ -152,10 +151,6 @@ export function SmartSearchTab({ user, recipes, onFilterChange }: SmartSearchTab
       <div className="space-y-3">
         <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Filtros automáticos activos</h5>
         <div className="flex flex-wrap gap-2">
-          <Badge variant="secondary" className="bg-green-100 text-green-800 border-green-300 px-3 py-1.5 flex items-center gap-1.5">
-            <MapPin className="w-3.5 h-3.5" />
-            Región: {region}
-          </Badge>
           <Badge variant="secondary" className="bg-blue-100 text-blue-800 border-blue-300 px-3 py-1.5 flex items-center gap-1.5">
             <Activity className="w-3.5 h-3.5" />
             Bajo índice glucémico
@@ -166,7 +161,7 @@ export function SmartSearchTab({ user, recipes, onFilterChange }: SmartSearchTab
           </Badge>
           <Badge variant="secondary" className="bg-orange-100 text-orange-800 border-orange-300 px-3 py-1.5 flex items-center gap-1.5">
             <Scale className="w-3.5 h-3.5" />
-            Prioridad: {nutritionalPriority === 'control de peso' ? 'Control de peso' : 'Mantenimiento nutricional'}
+            {nutritionalPriority === 'control de peso' ? 'Orden: menos calorías primero (IMC ≥ 25)' : 'Orden: sin ajuste por IMC'}
           </Badge>
         </div>
       </div>
