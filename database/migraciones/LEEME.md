@@ -12,6 +12,7 @@ psql -h localhost -p 5433 -U postgres -d BD_gessenapp -f database/migraciones/00
 psql -h localhost -p 5433 -U postgres -d BD_gessenapp -f database/migraciones/005_preparaciones.sql
 psql -h localhost -p 5433 -U postgres -d BD_gessenapp -f database/migraciones/006_region_narino.sql
 psql -h localhost -p 5433 -U postgres -d BD_gessenapp -f database/migraciones/007_seguimiento_clinico.sql
+psql -h localhost -p 5433 -U postgres -d BD_gessenapp -f database/migraciones/008_imagenes_locales.sql
 ```
 
 ## Migraciones
@@ -28,8 +29,9 @@ psql -h localhost -p 5433 -U postgres -d BD_gessenapp -f database/migraciones/00
 | `006_region_narino.sql` | Asigna a Nariño la región Andina por defecto (Pasto, Ipiales, Túquerres); quien viva en la costa puede elegir la Pacífica en su perfil. |
 
 | `007_seguimiento_clinico.sql` | Crea `mediciones_peso` (curva de peso e IMC, con la primera medición de cada usuario), `seguimiento_clinico` (glucemia en ayunas y posprandial, HbA1c, perfil lipídico, creatinina, circunferencia de pantorrilla, fuerza de prensión y SARC-F) y la columna `usuarios.permite_ig_medio` (el profesional autoriza platillos de índice glucémico medio). |
+| `008_imagenes_locales.sql` | Cambia la imagen de los 96 platillos por su copia en WebP servida por la propia aplicación (`frontend/public/platillos`), descargada de Wikimedia Commons con `database/imagenes/descargar_imagenes_locales.py`. Las fotos cargan más rápido y sin cookies de terceros; los créditos de autor y licencia no cambian. |
 
-Las siete migraciones se pueden ejecutar varias veces sin dañar los datos.
+Las ocho migraciones se pueden ejecutar varias veces sin dañar los datos.
 
 ## Tabla `logs`
 

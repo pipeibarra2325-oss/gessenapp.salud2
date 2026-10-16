@@ -7,10 +7,10 @@
       <meta name="description" content="GessenApp: recomendaciones alimentarias, registro de consumos y seguimiento clínico para personas con diabetes tipo 2 en Nariño, con apoyo del profesional de la salud." />
       <meta name="theme-color" content="#16a34a" />
       <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-      <!-- Orígenes de las imágenes: la conexión se abre antes de pedirlas -->
-      <link rel="preconnect" href="https://images.unsplash.com" />
-      <link rel="preconnect" href="https://thumb.wikimedia.org" />
-      <link rel="dns-prefetch" href="https://upload.wikimedia.org" />
+      <!-- La foto de la portada se pide desde el inicio, en el tamaño que corresponde a la pantalla -->
+      <link rel="preload" as="image" href="/img/portada-960.webp" fetchpriority="high"
+            imagesrcset="/img/portada-480.webp 480w, /img/portada-720.webp 720w, /img/portada-960.webp 960w"
+            imagesizes="(min-width: 1024px) 50vw, 100vw" />
     </head>
 
     <body>

@@ -1,7 +1,8 @@
-import { ImageWithFallback, imagenOptimizada } from './figma/ImageWithFallback';
+import { ImageWithFallback } from './figma/ImageWithFallback';
 
-// Foto de la portada: el navegador elige el tamaño según la pantalla (celular o computador)
-const FOTO_PORTADA = 'https://images.unsplash.com/photo-1723985021773-d1f4c4ebfdd1?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w3Nzg4Nzd8MHwxfHNlYXJjaHwxfHxoZWFsdGh5JTIwZGlhYmV0aWMlMjBmb29kJTIwc2FsYWR8ZW58MXx8fHwxNzU4NzE4ODc5fDA&ixlib=rb-4.1.0&q=80&w=1080&utm_source=figma&utm_medium=referral';
+// Foto de la portada, servida por la propia aplicación en WebP (frontend/public/img) en tres tamaños:
+// el navegador elige el adecuado para la pantalla. index.html la precarga.
+const PORTADA_SRCSET = [480, 720, 960].map((w) => `/img/portada-${w}.webp ${w}w`).join(', ');
 import { Button } from './ui/button';
 import { ArrowRight, Utensils, Heart, Sparkles, MapPin } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -90,8 +91,8 @@ export function HeroSection({ isLoggedIn, user, region }: HeroSectionProps) {
           <div className="relative">
             <div className="rounded-3xl overflow-hidden shadow-2xl">
               <ImageWithFallback 
-                src={imagenOptimizada(FOTO_PORTADA, 960)}
-                srcSet={[480, 720, 960].map((w) => `${imagenOptimizada(FOTO_PORTADA, w)} ${w}w`).join(', ')}
+                src="/img/portada-960.webp"
+                srcSet={PORTADA_SRCSET}
                 sizes="(min-width: 1024px) 50vw, 100vw"
                 alt="Comida saludable para diabéticos"
                 width={900}

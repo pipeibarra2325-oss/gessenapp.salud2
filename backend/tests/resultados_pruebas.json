@@ -1,5 +1,5 @@
 {
-  "fecha": "2026-10-09T12:56:05.894Z",
+  "fecha": "2026-10-09T22:38:32.598Z",
   "aprobados": 68,
   "total": 68,
   "resultados": [
@@ -40,7 +40,7 @@
       "modulo": "Autenticación",
       "descripcion": "Inicio de sesión correcto devuelve token e id del usuario",
       "esperado": "HTTP 200 con user.id",
-      "obtenido": "HTTP 200, user.id = 270, región: Andina",
+      "obtenido": "HTTP 200, user.id = 282, región: Andina",
       "estado": "Aprobado"
     },
     {
@@ -48,7 +48,7 @@
       "modulo": "Autenticación",
       "descripcion": "Inicio de sesión con contraseña incorrecta queda en los logs",
       "esperado": "HTTP 401 y log LOGIN_FALLIDO",
-      "obtenido": "HTTP 401, logs LOGIN_FALLIDO: 254 → 255",
+      "obtenido": "HTTP 401, logs LOGIN_FALLIDO: 262 → 263",
       "estado": "Aprobado"
     },
     {
@@ -136,7 +136,7 @@
       "modulo": "Registro de consumos",
       "descripcion": "Paciente registra un consumo",
       "esperado": "HTTP 201 y log REGISTRAR_CONSUMO",
-      "obtenido": "HTTP 201, logs: 2220 → 2221",
+      "obtenido": "HTTP 201, logs: 2222 → 2223",
       "estado": "Aprobado"
     },
     {
@@ -176,7 +176,7 @@
       "modulo": "Registro de consumos",
       "descripcion": "Paciente consulta sus consumos de hoy con su aporte nutricional",
       "esperado": "El consumo registrado aparece con calorías y hora",
-      "obtenido": "HTTP 200, 1 registro(s): <b>Arepa</b> con \"comillas\" & símbolos (R3) 240.5 kcal a las 07:56",
+      "obtenido": "HTTP 200, 1 registro(s): <b>Arepa</b> con \"comillas\" & símbolos (R3) 240.5 kcal a las 17:38",
       "estado": "Aprobado"
     },
     {
@@ -280,7 +280,7 @@
       "modulo": "Panel",
       "descripcion": "Dashboard con indicadores",
       "esperado": "HTTP 200 con totales",
-      "obtenido": "platillos 107, consumos 3705, usuarios 108",
+      "obtenido": "platillos 107, consumos 3705, usuarios 110",
       "estado": "Aprobado"
     },
     {
@@ -296,7 +296,7 @@
       "modulo": "Recetas",
       "descripcion": "Crear un platillo desde el panel",
       "esperado": "HTTP 201 y log CREAR_PLATILLO",
-      "obtenido": "HTTP 201, id 129",
+      "obtenido": "HTTP 201, id 130",
       "estado": "Aprobado"
     },
     {
@@ -336,7 +336,7 @@
       "modulo": "Recetas",
       "descripcion": "Asignar ingredientes a un platillo desde el panel recalcula su aporte",
       "esperado": "100 g de pollo + 100 g de brócoli = 199 kcal",
-      "obtenido": "HTTP 200, 199 kcal, log: 92 → 93",
+      "obtenido": "HTTP 200, 199 kcal, log: 93 → 94",
       "estado": "Aprobado"
     },
     {
@@ -408,7 +408,7 @@
       "modulo": "Reporte PDF",
       "descripcion": "La descarga del informe queda en los logs",
       "esperado": "Log DESCARGAR_REPORTE_PDF",
-      "obtenido": "logs: 24 → 25",
+      "obtenido": "logs: 25 → 26",
       "estado": "Aprobado"
     },
     {
@@ -440,7 +440,7 @@
       "modulo": "Aprendizaje automático",
       "descripcion": "Reentrenar el modelo desde el panel",
       "esperado": "HTTP 200 y log ENTRENAR_MODELO",
-      "obtenido": "HTTP 200, 1146 interacciones de 38 pacientes, log: 33 → 34",
+      "obtenido": "HTTP 200, 1146 interacciones de 38 pacientes, log: 34 → 35",
       "estado": "Aprobado"
     },
     {
@@ -512,7 +512,7 @@
       "modulo": "Logs",
       "descripcion": "Consulta de los logs",
       "esperado": "Incluye inicios de sesión y acciones del panel",
-      "obtenido": "HTTP 200, 3896 eventos",
+      "obtenido": "HTTP 200, 3955 eventos",
       "estado": "Aprobado"
     },
     {
@@ -544,7 +544,7 @@
       "modulo": "Desempeño",
       "descripcion": "Tiempo de respuesta del catálogo (30 solicitudes)",
       "esperado": "Percentil 95 menor de 1000 ms",
-      "obtenido": "media 5 ms; p95 7 ms",
+      "obtenido": "media 5 ms; p95 11 ms",
       "estado": "Aprobado"
     }
   ]

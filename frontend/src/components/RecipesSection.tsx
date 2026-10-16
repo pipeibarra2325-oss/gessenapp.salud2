@@ -5,13 +5,13 @@ import { Button } from './ui/button';
 import { Search, Sparkles, Activity, Star, Heart, Trash2, Utensils, Zap, ChefHat, ShoppingBag, Lightbulb, ChevronLeft, ChevronRight, Scan, BrainCircuit, HeartPulse } from 'lucide-react';
 import { Input } from './ui/input';
 import { LoginModal } from './LoginModal';
-import { RegisterModal } from './RegisterModal';
-import { ForgotPasswordModal } from './ForgotPasswordModal';
-import { SmartSearchTab } from './SmartSearchTab';
-import { InventoryTab } from './InventoryTab';
-import { DailyRecommendationsTab } from './DailyRecommendationsTab';
-import { MLRecommendationsTab } from './MLRecommendationsTab';
-import { ConsumptionTab, type Consumption } from './ConsumptionTab';
+import type { Consumption } from './ConsumptionTab';
+// Las pestañas inteligentes se descargan cuando la persona abre cada una
+const SmartSearchTab = lazy(() => import('./SmartSearchTab').then((m) => ({ default: m.SmartSearchTab })));
+const InventoryTab = lazy(() => import('./InventoryTab').then((m) => ({ default: m.InventoryTab })));
+const DailyRecommendationsTab = lazy(() => import('./DailyRecommendationsTab').then((m) => ({ default: m.DailyRecommendationsTab })));
+const MLRecommendationsTab = lazy(() => import('./MLRecommendationsTab').then((m) => ({ default: m.MLRecommendationsTab })));
+const ConsumptionTab = lazy(() => import('./ConsumptionTab').then((m) => ({ default: m.ConsumptionTab })));
 // El detalle de la receta y «Mi salud» usan gráficas: se descargan al abrirlos
 const RecipeModal = lazy(() => import('./RecipeModal').then((m) => ({ default: m.RecipeModal })));
 const SeguimientoClinico = lazy(() => import('./SeguimientoClinico').then((m) => ({ default: m.SeguimientoClinico })));
@@ -20,6 +20,8 @@ import { motion, AnimatePresence } from 'motion/react';
 import { obtenerPlatillos, registrarConsumo, toggleFavorito, obtenerHistorialConsumos, eliminarConsumo, registrarInteraccion } from '../services/api';
 import { calcularAlertas } from '../utils/referencias';
 import { apiUrl, getAuthHeaders } from '../utils/auth';
+const ForgotPasswordModal = lazy(() => import('./ForgotPasswordModal').then((m) => ({ default: m.ForgotPasswordModal })));
+const RegisterModal = lazy(() => import('./RegisterModal').then((m) => ({ default: m.RegisterModal })));
 
 const flavors = ['Todas', 'Dulce', 'Salado', 'Neutro'];
 const categories = ['Todas', 'Desayuno', 'Almuerzo', 'Cena', 'Merienda', 'Snack', 'Postre'];
@@ -498,6 +500,7 @@ export function RecipesSection({ isLoggedIn, user, onLoginSuccess }: RecipesSect
                         exit={{ opacity: 0, height: 0, y: -10 }}
                         className={`mt-4 p-6 bg-gray-50 rounded-3xl border border-gray-100 w-full ${activeSmartTab === 'salud' ? 'max-w-5xl' : 'max-w-3xl'} text-left shadow-sm`}
                       >
+                        <Suspense fallback={<p className="text-sm text-gray-500 py-6 text-center">Cargando...</p>}>
                         {activeSmartTab === 'smart-search' ? (
                           <SmartSearchTab
                             user={user}
@@ -557,6 +560,7 @@ export function RecipesSection({ isLoggedIn, user, onLoginSuccess }: RecipesSect
                             </p>
                           </>
                         )}
+                        </Suspense>
                       </motion.div>
                     )}
                   </AnimatePresence>
@@ -818,21 +822,29 @@ export function RecipesSection({ isLoggedIn, user, onLoginSuccess }: RecipesSect
         onLoginSuccess={onLoginSuccess}
       />
 
-      <RegisterModal
-        open={registerModalOpen}
-        onClose={() => setRegisterModalOpen(false)}
-        onSwitchToLogin={() => {
-          setRegisterModalOpen(false);
-          setLoginModalOpen(true);
-        }}
-        onRegisterSuccess={onLoginSuccess}
-      />
+      {registerModalOpen && (
+        <Suspense fallback={null}>
+          <RegisterModal
+            open={registerModalOpen}
+            onClose={() => setRegisterModalOpen(false)}
+            onSwitchToLogin={() => {
+              setRegisterModalOpen(false);
+              setLoginModalOpen(true);
+            }}
+            onRegisterSuccess={onLoginSuccess}
+          />
+        </Suspense>
+      )}
 
-      <ForgotPasswordModal
-        open={forgotPasswordModalOpen}
-        onClose={() => setForgotPasswordModalOpen(false)}
-        onBackToLogin={handleBackToLogin}
-      />
+      {forgotPasswordModalOpen && (
+        <Suspense fallback={null}>
+          <ForgotPasswordModal
+            open={forgotPasswordModalOpen}
+            onClose={() => setForgotPasswordModalOpen(false)}
+            onBackToLogin={handleBackToLogin}
+          />
+        </Suspense>
+      )}
     </section>
   );
 }

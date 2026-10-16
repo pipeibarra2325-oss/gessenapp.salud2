@@ -55,6 +55,8 @@ if (fs.existsSync(path.join(FRONTEND_BUILD, "index.html"))) {
   app.use(express.static(FRONTEND_BUILD, {
     setHeaders(res, archivo) {
       if (archivo.includes(`${path.sep}assets${path.sep}`)) res.setHeader("Cache-Control", "public, max-age=31536000, immutable");
+      // Fotos de los platillos y de la portada: cambian muy poco
+      else if (archivo.includes(`${path.sep}platillos${path.sep}`) || archivo.includes(`${path.sep}img${path.sep}`)) res.setHeader("Cache-Control", "public, max-age=2592000");
       else if (archivo.endsWith("index.html")) res.setHeader("Cache-Control", "no-cache");
     },
   }));

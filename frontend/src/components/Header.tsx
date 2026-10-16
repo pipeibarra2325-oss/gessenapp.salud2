@@ -3,13 +3,13 @@ import { useState, lazy, Suspense } from 'react';
 import { Button } from './ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle, SheetDescription, SheetHeader } from './ui/sheet';
 import { LoginModal } from './LoginModal';
-import { RegisterModal } from './RegisterModal';
-import { ForgotPasswordModal } from './ForgotPasswordModal';
-import { SettingsModal } from './SettingsModal';
-import { EditarPerfilModal } from './EditarPerfilModal';
 // Usa gráficas: se descarga solo cuando se abre
 const AboutMeModal = lazy(() => import('./AboutMeModal').then((m) => ({ default: m.AboutMeModal })));
 import { motion, AnimatePresence } from 'motion/react';
+const SettingsModal = lazy(() => import('./SettingsModal').then((m) => ({ default: m.SettingsModal })));
+const EditarPerfilModal = lazy(() => import('./EditarPerfilModal').then((m) => ({ default: m.EditarPerfilModal })));
+const ForgotPasswordModal = lazy(() => import('./ForgotPasswordModal').then((m) => ({ default: m.ForgotPasswordModal })));
+const RegisterModal = lazy(() => import('./RegisterModal').then((m) => ({ default: m.RegisterModal })));
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -239,17 +239,25 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
         onSwitchToForgotPassword={() => { setLoginModalOpen(false); setOlvidoOpen(true); }}
         onLoginSuccess={onLogin} 
       />
-      <ForgotPasswordModal
-        open={olvidoOpen}
-        onClose={() => setOlvidoOpen(false)}
-        onBackToLogin={() => { setOlvidoOpen(false); setLoginModalOpen(true); }}
-      />
-      <RegisterModal 
-        open={registerModalOpen} 
-        onClose={() => setRegisterModalOpen(false)} 
-        onSwitchToLogin={handleSwitchToLogin} 
-        onRegisterSuccess={onLogin} 
-      />
+      {olvidoOpen && (
+        <Suspense fallback={null}>
+          <ForgotPasswordModal
+            open={olvidoOpen}
+            onClose={() => setOlvidoOpen(false)}
+            onBackToLogin={() => { setOlvidoOpen(false); setLoginModalOpen(true); }}
+          />
+        </Suspense>
+      )}
+      {registerModalOpen && (
+        <Suspense fallback={null}>
+          <RegisterModal
+            open={registerModalOpen} 
+            onClose={() => setRegisterModalOpen(false)} 
+            onSwitchToLogin={handleSwitchToLogin} 
+            onRegisterSuccess={onLogin} 
+          />
+        </Suspense>
+      )}
       {aboutMeModalOpen && (
       <Suspense fallback={null}>
       <AboutMeModal 
@@ -266,19 +274,27 @@ export function Header({ isLoggedIn, user, onLogout, onLogin }: HeaderProps) {
       />
       </Suspense>
       )}
-      <EditarPerfilModal
-        open={editarPerfilOpen}
-        onClose={() => setEditarPerfilOpen(false)}
-        user={user}
-        onUpdateUser={onLogin}
-      />
-      <SettingsModal 
-        open={settingsModalOpen} 
-        onClose={() => setSettingsModalOpen(false)} 
-        user={user} 
-        onUpdateUser={onLogin} 
-        onLogout={onLogout} 
-      />
+      {editarPerfilOpen && (
+        <Suspense fallback={null}>
+          <EditarPerfilModal
+            open={editarPerfilOpen}
+            onClose={() => setEditarPerfilOpen(false)}
+            user={user}
+            onUpdateUser={onLogin}
+          />
+        </Suspense>
+      )}
+      {settingsModalOpen && (
+        <Suspense fallback={null}>
+          <SettingsModal
+            open={settingsModalOpen} 
+            onClose={() => setSettingsModalOpen(false)} 
+            user={user} 
+            onUpdateUser={onLogin} 
+            onLogout={onLogout} 
+          />
+        </Suspense>
+      )}
     </>
   );
 }

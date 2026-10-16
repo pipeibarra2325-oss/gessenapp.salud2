@@ -8,6 +8,7 @@ import { DiabetesInfoSection } from './components/DiabetesInfoSection';
 import { Footer } from './components/Footer';
 import { Toaster } from "sonner";
 
+
 import { apiUrl } from './utils/auth';
 // El panel del profesional (con sus gráficas y el generador de PDF) se descarga solo cuando se abre:
 // así la página de inicio carga mucho menos JavaScript, sobre todo en el celular
